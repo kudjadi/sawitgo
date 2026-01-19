@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Form Panen Sawit - Cetak PDF & CSV</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body class="bg-gray-100 p-4">
+
+<div class="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-6">
+  <h1 class="text-2xl font-bold text-center text-green-800 mb-2">Form Panen Sawit</h1>
+  <p class="text-center text-gray-600 mb-6">Input data panen sawit dan ekspor ke PDF/CSV</p>
+
+  <!-- Form Input -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Nama Pengurus Kelompok</label>
+      <input id="kelompok" placeholder="Contoh: Kelompok Tani Maju Jaya" class="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Panen</label>
+      <input id="tanggal" type="date" class="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Nama Pemanen</label>
+      <input id="nama" placeholder="Nama lengkap pemanen" class="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Nomor Kavling</label>
+      <input id="kavling" placeholder="Contoh: KAV-001" class="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Jumlah Tandan</label>
+      <input id="tandan" type="number" placeholder="0" min="0" class="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Berondolan (Kg)</label>
+      <input id="berondolan" type="number" placeholder="0" min="0" step="0.1" class="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+    </div>
+    <div class="md:col-span-2">
+      <label class="block text-sm font-medium text-gray-700 mb-1">Hasil Tandan (Kg)</label>
+      <input id="hasil" type="number" placeholder="0" min="0" step="0.1" class="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+    </div>
+  </div>
+
+  <!-- Tombol Aksi -->
+  <div class="flex flex-col md:flex-row gap-3 mb-6">
+    <button onclick="tambahData()" class="flex-1 bg-green-600 hover:bg-green-700 text-white p-3 rounded-lg font-semibold transition duration-200">
+      + Tambah ke Daftar
+    </button>
+  </div>
+
+  <!-- Daftar Data -->
+  <div class="mb-6">
+    <h2 class="text-lg font-bold text-gray-800 mb-3">Daftar Data Panen</h2>
+    <div class="overflow-x-auto">
+      <table id="tabelData" class="w-full border-collapse border border-gray-300">
+        <thead class="bg-green-100">
+          <tr>
+            <th class="border border-gray-300 p-2 text-left">No</th>
+            <th class="border border-gray-300 p-2 text-left">Kelompok</th>
+            <th class="border border-gray-300 p-2 text-left">Tanggal</th>
+            <th class="border border-gray-300 p-2 text-left">Nama</th>
+            <th class="border border-gray-300 p-2 text-left">Kavling</th>
+            <th class="border border-gray-300 p-2 text-left">Tandan</th>
+            <th class="border border-gray-300 p-2 text-left">Berondolan (Kg)</th>
+            <th class="border border-gray-300 p-2 text-left">Hasil (Kg)</th>
+            <th class="border border-gray-300 p-2 text-left">Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="tabelBody">
+          <!-- Data akan ditampilkan di sini -->
+        </tbody>
+      </table>
+    </div>
+    <p id="status" class="text-center text-sm mt-3 text-gray-600"></p>
+  </div>
+
+    <!-- Tombol Aksi -->
+  <div class="flex flex-col md:flex-row gap-3 mb-6">
+    <button onclick="cetakPDF()" class="flex-1 bg-red-600 hover:bg-red-700 text-white p-3 rounded-lg font-semibold transition duration-200">
+      📄 Cetak PDF
+    </button>
+    <button onclick="unduhCSV()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg font-semibold transition duration-200">
+      📊 Unduh CSV
+    </button>
+    <button onclick="resetForm()" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white p-3 rounded-lg font-semibold transition duration-200">
+      🔄 Reset Form
+    </button>
+  </div>
+
+  <!-- Informasi -->
+  <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+    <h3 class="font-bold text-gray-700 mb-2">Cara Menggunakan:</h3>
+    <ol class="list-decimal pl-5 text-sm text-gray-600 space-y-1">
+      <li>Isi semua data pada form di atas</li>
+      <li>Klik "Tambah ke Daftar" untuk menyimpan data sementara</li>
+      <li>Data akan muncul di tabel bawah</li>
+      <li>Klik "Cetak PDF" untuk membuat file PDF</li>
+      <li>Klik "Unduh CSV" untuk membuat file Excel/CSV</li>
+      <li>Klik "Reset Form" untuk menghapus semua data</li>
+    </ol>
+  </div>
+</div>
+
+<script>
+// Array untuk menyimpan data sementara
+let dataPanen = [];
+let nomorUrut = 1;
+
+// Format tanggal ke Indonesia
+function formatTanggal(tanggal) {
+  if (!tanggal) return '-';
+  const date = new Date(tanggal);
+  return date.toLocaleDateString('id-ID', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+}
+
+// Validasi input
+function validasiInput(data) {
+  if (!data.kelompok || !data.nama || !data.kavling) {
+    alert('Kelompok, Nama, dan Kavling wajib diisi!');
+    return false;
+  }
+  if (!data.tanggal) {
+    alert('Tanggal panen harus diisi!');
+    return false;
+  }
+  return true;
+}
+
+// Tambah data ke tabel
+function tambahData() {
+  const data = {
+    no: nomorUrut,
+    kelompok: document.getElementById('kelompok').value.trim(),
+    tanggal: document.getElementById('tanggal').value,
+    nama: document.getElementById('nama').value.trim(),
+    kavling: document.getElementById('kavling').value.trim(),
+    tandan: parseInt(document.getElementById('tandan').value) || 0,
+    berondolan: parseFloat(document.getElementById('berondolan').value) || 0,
+    hasil: parseFloat(document.getElementById('hasil').value) || 0
+  };
+
+  if (!validasiInput(data)) return;
+
+  dataPanen.push(data);
+  nomorUrut++;
+  
+  updateTabel();
+  resetInput();
+  document.getElementById('status').innerText = `Data berhasil ditambahkan! Total: ${dataPanen.length} data`;
+}
+
+// Update tabel tampilan
+function updateTabel() {
+  const tbody = document.getElementById('tabelBody');
+  tbody.innerHTML = '';
+  
+  if (dataPanen.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="9" class="border border-gray-300 p-4 text-center text-gray-500">
+          Belum ada data. Silakan tambah data terlebih dahulu.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+  
+  dataPanen.forEach((data, index) => {
+    const row = document.createElement('tr');
+    row.className = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
+    row.innerHTML = `
+      <td class="border border-gray-300 p-2">${data.no}</td>
+      <td class="border border-gray-300 p-2">${data.kelompok}</td>
+      <td class="border border-gray-300 p-2">${formatTanggal(data.tanggal)}</td>
+      <td class="border border-gray-300 p-2">${data.nama}</td>
+      <td class="border border-gray-300 p-2">${data.kavling}</td>
+      <td class="border border-gray-300 p-2 text-right">${data.tandan}</td>
+      <td class="border border-gray-300 p-2 text-right">${data.berondolan.toFixed(1)}</td>
+      <td class="border border-gray-300 p-2 text-right">${data.hasil.toFixed(1)}</td>
+      <td class="border border-gray-300 p-2 text-center">
+        <button onclick="hapusData(${index})" class="bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600">
+          Hapus
+        </button>
+      </td>
+    `;
+    tbody.appendChild(row);
+  });
+}
+
+// Hapus data
+function hapusData(index) {
+  if (confirm('Apakah Anda yakin ingin menghapus data ini?')) {
+    dataPanen.splice(index, 1);
+    // Perbarui nomor urut
+    dataPanen.forEach((data, i) => {
+      data.no = i + 1;
+    });
+    nomorUrut = dataPanen.length + 1;
+    updateTabel();
+    document.getElementById('status').innerText = `Data berhasil dihapus! Total: ${dataPanen.length} data`;
+  }
+}
+
+// Reset input form
+function resetInput() {
+  document.getElementById('nama').value = '';
+  document.getElementById('kavling').value = '';
+  document.getElementById('tandan').value = '';
+  document.getElementById('berondolan').value = '';
+  document.getElementById('hasil').value = '';
+  document.getElementById('nama').focus();
+}
+
+// Reset semua data
+function resetForm() {
+  if (dataPanen.length === 0) {
+    alert('Tidak ada data untuk direset.');
+    return;
+  }
+  
+  if (confirm('Apakah Anda yakin ingin menghapus SEMUA data?')) {
+    dataPanen = [];
+    nomorUrut = 1;
+    document.getElementById('kelompok').value = '';
+    document.getElementById('tanggal').value = '';
+    resetInput();
+    updateTabel();
+    document.getElementById('status').innerText = 'Semua data telah dihapus.';
+  }
+}
+
+// Cetak PDF menggunakan jsPDF
+function cetakPDF() {
+  if (dataPanen.length === 0) {
+    alert('Tidak ada data untuk dicetak. Silakan tambah data terlebih dahulu.');
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  
+  // Judul
+  doc.setFontSize(18);
+  doc.text('LAPORAN PANEN SAWIT', 105, 15, { align: 'center' });
+  
+  // Informasi header
+  doc.setFontSize(10);
+  doc.text(`Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}`, 14, 25);
+  doc.text(`Total Data: ${dataPanen.length} entri`, 14, 32);
+  
+  // Header tabel
+  const headers = [['No', 'Kelompok', 'Tanggal', 'Nama', 'Kavling', 'Tandan', 'Berondolan (Kg)', 'Hasil (Kg)']];
+  
+  // Data tabel
+  const tableData = dataPanen.map(data => [
+    data.no,
+    data.kelompok,
+    formatTanggal(data.tanggal),
+    data.nama,
+    data.kavling,
+    data.tandan.toString(),
+    data.berondolan.toFixed(1),
+    data.hasil.toFixed(1)
+  ]);
+  
+  // Buat tabel
+  doc.autoTable({
+    head: headers,
+    body: tableData,
+    startY: 40,
+    theme: 'grid',
+    styles: { fontSize: 9, cellPadding: 3 },
+    headStyles: { fillColor: [34, 139, 34] } // Warna hijau
+  });
+  
+  // Hitung total
+  const totalTandan = dataPanen.reduce((sum, data) => sum + data.tandan, 0);
+  const totalBerondolan = dataPanen.reduce((sum, data) => sum + data.berondolan, 0);
+  const totalHasil = dataPanen.reduce((sum, data) => sum + data.hasil, 0);
+  
+  // Footer dengan total
+  const finalY = doc.lastAutoTable.finalY || 100;
+  doc.setFontSize(10);
+  doc.text(`Total Tandan: ${totalTandan}`, 14, finalY + 10);
+  doc.text(`Total Berondolan: ${totalBerondolan.toFixed(1)} Kg`, 14, finalY + 17);
+  doc.text(`Total Hasil: ${totalHasil.toFixed(1)} Kg`, 14, finalY + 24);
+  
+  // Simpan PDF
+  const tanggal = new Date().toISOString().slice(0,10);
+  doc.save(`Laporan_Panen_Sawit_${tanggal}.pdf`);
+  
+  document.getElementById('status').innerText = 'PDF berhasil dibuat dan diunduh!';
+}
+
+// Unduh data sebagai CSV
+function unduhCSV() {
+  if (dataPanen.length === 0) {
+    alert('Tidak ada data untuk diunduh. Silakan tambah data terlebih dahulu.');
+    return;
+  }
+  
+  // Header CSV
+  let csv = 'No,Kelompok,Tanggal,Nama,Kavling,Tandan,Berondolan (Kg),Hasil (Kg)\n';
+  
+  // Data CSV
+  dataPanen.forEach(data => {
+    csv += `${data.no},${data.kelompok},${formatTanggal(data.tanggal)},${data.nama},${data.kavling},${data.tandan},${data.berondolan},${data.hasil}\n`;
+  });
+  
+  // Hitung total
+  const totalTandan = dataPanen.reduce((sum, data) => sum + data.tandan, 0);
+  const totalBerondolan = dataPanen.reduce((sum, data) => sum + data.berondolan, 0);
+  const totalHasil = dataPanen.reduce((sum, data) => sum + data.hasil, 0);
+  
+  csv += `\nTOTAL,,,Total,,${totalTandan},${totalBerondolan.toFixed(1)},${totalHasil.toFixed(1)}\n`;
+  
+  // Buat blob dan unduh
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  
+  link.setAttribute('href', url);
+  link.setAttribute('download', `data_panen_sawit_${new Date().toISOString().slice(0,10)}.csv`);
+  link.style.visibility = 'hidden';
+  
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  
+  document.getElementById('status').innerText = 'File CSV berhasil diunduh!';
+}
+
+// Inisialisasi tanggal dengan hari ini
+window.onload = function() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('tanggal').value = today;
+  document.getElementById('kelompok').focus();
+};
+</script>
+
+</body>
+</html>
