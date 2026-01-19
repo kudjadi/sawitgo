@@ -2,166 +2,263 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Form Panen Sawit - Cetak PDF & CSV</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+  <title>Form Panen Sawit</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    @media (max-width: 640px) {
+      .mobile-scroll {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      .mobile-padding {
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+      .mobile-text {
+        font-size: 14px;
+      }
+      .mobile-input {
+        font-size: 16px !important;
+        padding: 12px !important;
+      }
+      .mobile-btn {
+        padding: 14px !important;
+        font-size: 16px !important;
+      }
+      .mobile-table {
+        font-size: 12px;
+      }
+      .mobile-table td, .mobile-table th {
+        padding: 6px 4px !important;
+      }
+    }
+    
+    button, input, select {
+      min-height: 44px;
+    }
+    
+    .scrollable-table {
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+    }
+    
+    @media (max-width: 768px) {
+      .responsive-table td:nth-child(7),
+      .responsive-table th:nth-child(7),
+      .responsive-table td:nth-child(9),
+      .responsive-table th:nth-child(9),
+      .responsive-table td:nth-child(10),
+      .responsive-table th:nth-child(10) {
+        display: none;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .responsive-table td:nth-child(4),
+      .responsive-table th:nth-child(4),
+      .responsive-table td:nth-child(8),
+      .responsive-table th:nth-child(8) {
+        display: none;
+      }
+    }
+  </style>
 </head>
-<body class="bg-gray-100 p-4">
+<body class="bg-gray-100 p-2 md:p-4">
 
-<div class="max-w-5xl mx-auto bg-white rounded-xl shadow-lg p-6">
-  <h1 class="text-2xl font-bold text-center text-green-800 mb-2">Form Panen Sawit</h1>
-  <p class="text-center text-gray-600 mb-6">Input data panen sawit dan ekspor ke PDF/CSV</p>
+<div class="max-w-full mx-auto bg-white rounded-xl shadow-lg p-3 md:p-6">
+  <!-- Header Mobile Optimized -->
+  <div class="text-center mb-4 md:mb-6">
+    <h1 class="text-xl md:text-2xl font-bold text-green-800 mb-1">Form Panen Sawit</h1>
+    <p class="text-xs md:text-sm text-gray-600">Input data panen dan ekspor ke PDF/CSV</p>
+  </div>
 
-  <!-- Form Input -->
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-    <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1">Nama Kelompok Tani</label>
-      <input id="kelompok" placeholder="Contoh: Kelompok Tani Maju Jaya" class="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
-    </div>
-    <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Panen</label>
-      <input id="tanggal" type="date" class="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
-    </div>
-    <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1">Nama Pemanen</label>
-      <input id="nama" placeholder="Nama lengkap pemanen" class="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
-    </div>
-    
-    <!-- Kolom Dropdown 37-48 dan Kavling -->
+  <!-- Form Input Mobile Optimized -->
+  <div class="space-y-3 md:space-y-4 mb-4 md:mb-6">
+    <!-- Row 1: Pilih Kelompok -->
     <div class="space-y-2">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <!-- Dropdown 37-48 -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Pilih Nomor (37-48)</label>
-          <select id="dropdown_no" class="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500" onchange="updateKavlingDropdown()">
-            <option value="">-- Pilih Nomor --</option>
-            <!-- Opsi akan diisi oleh JavaScript -->
-          </select>
-        </div>
-        
-        <!-- Dropdown Kavling berdasarkan pilihan -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Nomor Kavling</label>
-          <div class="flex gap-2">
-            <select id="dropdown_kavling" class="flex-1 border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
-              <option value="">-- Pilih Kavling --</option>
-              <!-- Opsi akan diisi dinamis -->
-            </select>
-            <input id="kavling_manual" placeholder="Atau ketik manual" class="flex-1 border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
-          </div>
-        </div>
-      </div>
-      <div id="selectedInfo" class="text-sm text-green-600 font-medium mt-1"></div>
+      <label class="block text-sm font-medium text-gray-700">Pilih Kelompok Tani</label>
+      <select id="dropdown_kelompok" class="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 mobile-input" onchange="updateDataKelompok()">
+        <option value="">-- Pilih Kelompok --</option>
+        <option value="37">KHOIRUL HUDA & WELLI SANDRA (37)</option>
+        <option value="38">SLAMET & ARI MULYADI (38)</option>
+        <option value="39">NOVI ISWANTO & AHMADI (39)</option>
+        <option value="40">SUWAT ACH SUJARWO & HARNIDI (40)</option>
+        <option value="41">EKO WAHYUDI S & YUDI ASWAN (41)</option>
+        <option value="42">EDI SUPARNO & SISWO PRANOTO (42)</option>
+        <option value="43">BUDIONO & SUGANDA (43)</option>
+        <option value="44">AGUS SISWANTO & AHMAD SUJA'I (44)</option>
+        <option value="45">DEDI ARDIANSYAH & ELI MULYADI (45)</option>
+        <option value="46">SUPARDI & MARYANTO (46)</option>
+        <option value="47">NGATIJO & YUSUF (47)</option>
+        <option value="48">RUKITO & GOKLAS M.T (48)</option>
+      </select>
+      <div id="infoKelompok" class="text-xs md:text-sm text-green-600 font-medium"></div>
     </div>
     
-    <!-- Kolom Tandan -->
-    <div class="md:col-span-2">
-      <h3 class="font-bold text-gray-700 mb-2 border-b pb-1">Jenis Tandan</h3>
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Tandan Mentah</label>
-          <input id="tandan_mentah" type="number" placeholder="0" min="0" class="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500" oninput="hitungTotalTandan()">
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Tandan Busuk</label>
-          <input id="tandan_busuk" type="number" placeholder="0" min="0" class="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500" oninput="hitungTotalTandan()">
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Jangkos</label>
-          <input id="jangkos" type="number" placeholder="0" min="0" class="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500" oninput="hitungTotalTandan()">
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Total Tandan</label>
-          <input id="total_tandan" type="number" placeholder="0" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50" readonly>
-        </div>
+    <!-- Row 2: Tanggal dan Nama -->
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Panen</label>
+        <input id="tanggal" type="date" class="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 mobile-input">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Nama Pemanen</label>
+        <input id="nama" placeholder="Nama pemanen" class="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 mobile-input">
       </div>
     </div>
     
-    <!-- Berondolan dan Hasil -->
+    <!-- Row 3: Pilih Kavling -->
+    <div class="space-y-2">
+      <label class="block text-sm font-medium text-gray-700">Pilih Nomor Kavling</label>
+      
+      <!-- Dropdown Kavling -->
+      <div>
+        <select id="dropdown_kavling" class="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 mobile-input">
+          <option value="">-- Pilih Kavling --</option>
+        </select>
+      </div>
+      
+      <!-- Input Manual Kavling -->
+      <div class="flex items-center gap-2">
+        <div class="text-gray-500 text-xs flex-shrink-0">ATAU</div>
+        <input id="kavling_manual" placeholder="Ketik nomor kavling manual" class="flex-1 border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 mobile-input">
+      </div>
+      
+      <div id="selectedInfo" class="text-xs md:text-sm text-gray-600 mt-1"></div>
+    </div>
+    
+    <!-- Row 5: Berondolan saja -->
     <div>
+      <h3 class="font-bold text-gray-700 mb-2 text-sm md:text-base">Jenis Tandan</h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">T. Matang</label>
+          <input id="tandan_matang" type="number" placeholder="0" min="0" class="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 mobile-input">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">T. Mentah</label>
+          <input id="tandan_mentah" type="number" placeholder="0" min="0" class="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 mobile-input">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">T. Busuk</label>
+          <input id="tandan_busuk" type="number" placeholder="0" min="0" class="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 mobile-input">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Jangkos</label>
+          <input id="jangkos" type="number" placeholder="0" min="0" class="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 mobile-input">
+        </div>
+      </div>
       <label class="block text-sm font-medium text-gray-700 mb-1">Berondolan (Kg)</label>
-      <input id="berondolan" type="number" placeholder="0" min="0" step="0.1" class="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
-    </div>
-    <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1">Hasil Tandan (Kg)</label>
-      <input id="hasil" type="number" placeholder="0" min="0" step="0.1" class="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+      <input id="berondolan" type="number" placeholder="0" min="0" step="0.1" class="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 mobile-input">
     </div>
   </div>
 
   <!-- Tombol Tambah ke Daftar -->
-  <div class="mb-8">
-    <button onclick="tambahData()" class="w-full bg-green-600 hover:bg-green-700 text-white p-4 rounded-lg font-semibold text-lg transition duration-200 flex items-center justify-center gap-2">
-      <span class="text-xl">+</span> Tambah ke Daftar
+  <div class="mb-6 md:mb-8">
+    <button onclick="tambahData()" class="w-full bg-green-600 hover:bg-green-700 text-white p-4 rounded-lg font-semibold text-base md:text-lg transition duration-200 flex items-center justify-center gap-2 mobile-btn">
+      <span class="text-lg md:text-xl">+</span> <span class="truncate">Tambah ke Daftar</span>
     </button>
-    <p id="statusForm" class="text-center text-sm mt-2 text-gray-600"></p>
+    <p id="statusForm" class="text-center text-xs md:text-sm mt-2 text-gray-600"></p>
   </div>
 
-  <!-- Daftar Data -->
+  <!-- Daftar Data dengan Scroll Horizontal untuk Mobile -->
   <div class="mb-6">
-    <h2 class="text-lg font-bold text-gray-800 mb-3">Daftar Data Panen</h2>
-    <div class="overflow-x-auto">
-      <table id="tabelData" class="w-full border-collapse border border-gray-300">
+    <div class="flex justify-between items-center mb-3">
+      <h2 class="text-base md:text-lg font-bold text-gray-800">Daftar Data Panen</h2>
+      <span id="totalData" class="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded-full">0 data</span>
+    </div>
+    
+    <div class="mobile-scroll scrollable-table">
+      <table id="tabelData" class="w-full border-collapse border border-gray-300 mobile-table responsive-table">
         <thead class="bg-green-100">
           <tr>
-            <th class="border border-gray-300 p-2 text-left">No</th>
-            <th class="border border-gray-300 p-2 text-left">Kelompok</th>
-            <th class="border border-gray-300 p-2 text-left">Tanggal</th>
-            <th class="border border-gray-300 p-2 text-left">Nama</th>
-            <th class="border border-gray-300 p-2 text-left">Nomor (37-48)</th>
-            <th class="border border-gray-300 p-2 text-left">Kavling</th>
-            <th class="border border-gray-300 p-2 text-left">T. Mentah</th>
-            <th class="border border-gray-300 p-2 text-left">T. Busuk</th>
-            <th class="border border-gray-300 p-2 text-left">Jangkos</th>
-            <th class="border border-gray-300 p-2 text-left">Total Tandan</th>
-            <th class="border border-gray-300 p-2 text-left">Berondolan (Kg)</th>
-            <th class="border border-gray-300 p-2 text-left">Hasil (Kg)</th>
-            <th class="border border-gray-300 p-2 text-left">Aksi</th>
+            <th class="border border-gray-300 p-2 text-left text-xs">No</th>
+            <th class="border border-gray-300 p-2 text-left text-xs">Kelompok</th>
+            <th class="border border-gray-300 p-2 text-left text-xs hidden md:table-cell">Tanggal</th>
+            <th class="border border-gray-300 p-2 text-left text-xs">Nama</th>
+            <th class="border border-gray-300 p-2 text-left text-xs">Kavling</th>
+            <th class="border border-gray-300 p-2 text-left text-xs">T.Mnt</th>
+            <th class="border border-gray-300 p-2 text-left text-xs hidden sm:table-cell">T.Mtg</th>
+            <th class="border border-gray-300 p-2 text-left text-xs">T.Bsk</th>
+            <th class="border border-gray-300 p-2 text-left text-xs hidden sm:table-cell">Jkg</th>
+            <th class="border border-gray-300 p-2 text-left text-xs">Brdln</th>
+            <th class="border border-gray-300 p-2 text-left text-xs">Aksi</th>
           </tr>
         </thead>
         <tbody id="tabelBody">
           <!-- Data akan ditampilkan di sini -->
         </tbody>
-        <!-- Footer untuk Total -->
-        <tfoot id="tabelFooter" class="bg-gray-50 font-semibold">
-          <!-- Total akan dihitung otomatis -->
-        </tfoot>
       </table>
     </div>
-    <p id="statusTabel" class="text-center text-sm mt-3 text-gray-600"></p>
+    
+    <!-- Footer Total untuk Mobile -->
+    <div id="mobileTotal" class="mt-3 bg-gray-50 p-3 rounded-lg border border-gray-200 text-sm">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-center">
+        <div>
+          <div class="text-xs text-gray-500">T. Matang</div>
+          <div id="totalMatangMobile" class="font-bold">0</div>
+        </div>
+        <div>
+          <div class="text-xs text-gray-500">T. Mentah</div>
+          <div id="totalMentahMobile" class="font-bold">0</div>
+        </div>
+        <div>
+          <div class="text-xs text-gray-500">T. Busuk</div>
+          <div id="totalBusukMobile" class="font-bold">0</div>
+        </div>
+        <div>
+          <div class="text-xs text-gray-500">Jml Data</div>
+          <div id="totalDataMobile" class="font-bold text-green-700">0</div>
+        </div>
+      </div>
+    </div>
+    
+    <p id="statusTabel" class="text-center text-xs md:text-sm mt-2 text-gray-600"></p>
   </div>
 
-  <!-- Tombol Aksi -->
-  <div class="mb-8">
-    <h3 class="text-lg font-bold text-gray-800 mb-3">Ekspor Data</h3>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-      <button onclick="cetakPDF()" class="bg-red-600 hover:bg-red-700 text-white p-4 rounded-lg font-semibold transition duration-200 flex items-center justify-center gap-2">
-        <span class="text-xl">📄</span> Cetak PDF
+  <!-- Tombol Aksi - Mobile Optimized Grid -->
+  <div class="mb-6 md:mb-8">
+    <h3 class="text-base md:text-lg font-bold text-gray-800 mb-3">Ekspor Data</h3>
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+      <button onclick="cetakPDF()" class="bg-red-600 hover:bg-red-700 text-white p-3 rounded-lg font-semibold transition duration-200 flex items-center justify-center gap-1 text-sm mobile-btn">
+        <span class="text-base">📄</span> <span class="truncate">PDF</span>
       </button>
-      <button onclick="unduhCSV()" class="bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-lg font-semibold transition duration-200 flex items-center justify-center gap-2">
-        <span class="text-xl">📊</span> Unduh CSV
+      <button onclick="unduhCSV()" class="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg font-semibold transition duration-200 flex items-center justify-center gap-1 text-sm mobile-btn">
+        <span class="text-base">📊</span> <span class="truncate">CSV</span>
       </button>
-      <button onclick="resetForm()" class="bg-gray-600 hover:bg-gray-700 text-white p-4 rounded-lg font-semibold transition duration-200 flex items-center justify-center gap-2">
-        <span class="text-xl">🔄</span> Reset Form
+      <button onclick="resetForm()" class="col-span-2 md:col-span-1 bg-gray-600 hover:bg-gray-700 text-white p-3 rounded-lg font-semibold transition duration-200 flex items-center justify-center gap-1 text-sm mobile-btn">
+        <span class="text-base">🔄</span> <span class="truncate">Reset Semua</span>
       </button>
     </div>
-    <p id="statusAksi" class="text-center text-sm mt-2 text-gray-600"></p>
+    <p id="statusAksi" class="text-center text-xs md:text-sm mt-2 text-gray-600"></p>
   </div>
 
-  <!-- Informasi -->
-  <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-    <h3 class="font-bold text-gray-700 mb-2">Cara Menggunakan:</h3>
-    <ol class="list-decimal pl-5 text-sm text-gray-600 space-y-1">
-      <li>Isi semua data pada form di atas</li>
-      <li><strong>Pilih Nomor (37-48)</strong> dari dropdown pertama</li>
-      <li><strong>Pilih Kavling</strong> dari dropdown kedua yang muncul sesuai pilihan nomor</li>
-      <li>Atau <strong>ketik manual</strong> nomor kavling di input sebelah dropdown</li>
-      <li><strong>Total Tandan</strong> akan dihitung otomatis dari jumlah Tandan Mentah, Tandan Busuk, dan Jangkos</li>
-      <li>Klik <strong>"Tambah ke Daftar"</strong> untuk menyimpan data sementara</li>
-      <li>Data akan muncul di tabel dengan total keseluruhan di bagian bawah</li>
-      <li>Pilih opsi ekspor di bawah tabel untuk membuat PDF atau CSV</li>
-    </ol>
+  <!-- Accordion Informasi untuk Mobile -->
+  <div class="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
+    <details class="group">
+      <summary class="flex justify-between items-center p-3 cursor-pointer list-none">
+        <span class="font-bold text-gray-700 text-sm md:text-base">Cara Menggunakan</span>
+        <span class="transition group-open:rotate-180">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </span>
+      </summary>
+      <div class="p-3 pt-0 border-t border-gray-200">
+        <ol class="list-decimal pl-5 text-xs md:text-sm text-gray-600 space-y-1">
+          <li><strong>Pilih Kelompok</strong> dari dropdown pertama</li>
+          <li>Isi <strong>Tanggal</strong> dan <strong>Nama Pemanen</strong></li>
+          <li><strong>Pilih Kavling</strong> dari dropdown atau ketik manual</li>
+          <li>Isi jumlah untuk <strong>4 jenis tandan</strong> dan <strong>berondolan</strong></li>
+          <li>Klik <strong>"Tambah ke Daftar"</strong> untuk menyimpan</li>
+          <li>Geser tabel ke samping untuk melihat semua kolom</li>
+          <li>Klik tombol PDF atau CSV untuk ekspor data</li>
+        </ol>
+      </div>
+    </details>
   </div>
 </div>
 
@@ -169,69 +266,59 @@
 // Array untuk menyimpan data sementara
 let dataPanen = [];
 let nomorUrut = 1;
+let kelompokTerpilih = null;
 
-// Data kavling berdasarkan nomor 37-48
-const kavlingData = {
-  37: ["872", "862", "908", "851", "852", "855", "853", "854", "856", "857", "858", "859", "860", "861", "863", "874", "873", "871", "870", "869", "868", "867", "866", "865", "864"],
-  38: ["990", "981", "975", "980", "881", "880", "879", "877", "976", "876", "875", "984", "983", "982", "985", "986", "987", "988", "989", "1000", "999", "998", "997", "996"],
-  39: ["964", "979", "951", "965", "977", "978", "882", "955", "950", "952", "953", "954", "956", "957", "958", "959", "960", "961", "962", "963", "966", "967", "968", "969"],
-  40: ["1012", "1011", "1010", "1009", "1008", "1007", "1006", "1013", "1014", "1015", "1016", "1017", "1018", "1019", "1020", "1031", "1032", "1033", "1034", "1035", "1036", "1037", "1038", "1039", "1040", "1041", "1026"],
-  41: ["1029", "1024", "1001", "1003", "973", "992", "1030", "1028", "1027", "1025", "1023", "1021", "1005", "1004", "972", "971", "970", "991", "993", "994", "995", "1002", "974"],
-  42: ["1065", "1063", "1054", "1053", "1045", "1043", "1042", "1047", "1048", "1049", "1050", "1051", "1052", "1055", "1056", "1057", "1058", "1059", "1060", "1061", "1062", "1064", "1066", "1044", "1046"],
-  43: ["1103", "1077", "1075", "1069", "1067", "1068", "1074", "1076", "1078", "1079", "1080", "1081", "1082", "1083", "1084", "1104", "1102", "1101", "1100", "1099", "1098", "1105", "1097", "1070", "1073"],
-  44: ["1093", "1089", "1109", "1091", "1133", "1132", "1131", "1096", "1094", "1095", "1092", "1106", "1107", "1108", "1110", "1111", "1112", "1113", "1085", "1086", "1087", "1088", "1072", "1071", "1090"],
-  45: ["1150", "1155", "1157", "1137", "1135", "1154", "1134", "1114", "1115", "1116", "1117", "1157", "1156", "1149", "1151", "1152", "1139", "1140", "1141", "1127", "1128", "1129", "1130"],
-  46: ["1118", "1124", "1143", "1147", "1163", "1161", "1159", "1119", "1120", "1123", "1125", "1126", "1142", "1144", "1145", "1165", "1166", "1148", "1146", "1164", "1162", "1160", "1158"],
-  47: ["1193", "1189", "1191", "1182", "1175", "1168", "1170", "1177", "1194", "1179", "1180", "1181", "1183", "1184", "1185", "1186", "1187", "1188", "1192", "1167", "1169", "1174", "1176", "1190"],
-  48: ["1195", "1200", "1213", "1198", "1212", "1173", "1171", "1172", "1196", "1207", "1206", "1205", "1204", "1203", "1202", "1201", "1210", "1208", "1216", "1215", "1214", "1199"]
+// Data kelompok
+const dataKelompok = {
+  37: { nama: "KHOIRUL HUDA & WELLI SANDRA", kavling: ["SURANTO 908", "WANDA 851", "EGO NOFRI ADI 852", "ASEP PRIHATA 853", "WAHYU GUNAWAN 854", "ADI SUPRAYITNO 855", "AGUNG SETIAWAN 856", "DWI MARDIONO 857", "DEDEN SUBANDI 858", "PUJI WAHYU 859", "DODI KURNIAWAN 860", "TUNJANG 861", "KHOIRUDIN 862", "AGUS KHOIRUL UMAM 863", "AMINUDIN 864", "DWI FAJAR NOVIANTO 865", "FIRMAN ANDRIANSYAH 866", "SUKIMIN 867", "KARDI 868", "PORWANTO 869", "IKSAN YULIANTO 870", "JOKO SUSILO 871", "RAIHAN  872", "SUYATNO 873", "SULTAN SRINANTO 874"] },
+  38: { nama: "SLAMET & ARI MULYADI", kavling: ["ARIS FAUJI 875", "KHOIRUDIN 876", "SUKIMIN 877", "RISKI SULISTIO 878", "ADI PURNAWAN 879", "ASEP PRIYATNO 880", "LUTGIANTO 881", "BEJO WALUYO 975", "ASMAWI 976", "RUDI KURNIAWAN 980", "SULTAN SRINANTO 981", "PENGKI FERNANDO 982", "M. ANSORI 983", "IRIANTO 984", "IRIANTO 985", "SUYATNO 986", "YUSUF BAHTIAR 987", "SAINO 988", "RUDIANTO 989", "PORWANTO 990", "AGUNG SETIAWAN 996", "STIO WAHYUDI 997", "AMINUDIN 998", "JUMADI 999", "M. YUSUF BAHTIAR 1000"] },
+  39: { nama: "NOVI ISWANTO & AHMADI", kavling: ["WAHYU GUNAWAN 882", "WANDA 950", "NURFAHRUDIN 951", "SETIO WAHYUDI 952", "SURANTO 953", "ASMAWI 954", "IKSAN YULIANTO 955", "SUPARDI 956", "TUNJANG 957", "STIO WAHYUDI 958", "DODIK KURNIAWAN 959", "ARI SUPARMANTO 960", "DODIK KURNIAWAN 961", "ARIS FAUZI 962", "DWI FAJAR 963", "SENO 964", "WALJIMAN 965", "ANTONI 966", "PUJI WAHYU 967", "HENDRIONO 968", "WANDA 969", "ASEP PRIHATA 977", "SETIO WAHYUDI 978", "AHMAD RIBUT BUDIONO 979"] },
+  40: { nama: "SUWAT ACH SUJARWO & HARNIDI", kavling: ["PORWANTO 1006", "ADI SUPRAYITNO 1007", "EGO NOFRI ADI 1008", "SUKIMIN 1009", "PORWANTO 1010", "BEJO WALUYO 1011", "DEDEN SUBANDI 1012", "FIRMAN ANDRIA NSYAH 1013", "DODIK KURNIAWAN 1014", "IRIANTO 1015", "IRIANTO 1016", "DODI KURNIAWAN 1017", "LUTGIANTO 1018", "DWI MARDIONO 1019", "RISKI SULISTIO 1020", "ANTONI 1031", "ASEP PRIYATNO 1032", "SUYATNO 1033", "BUDI SUSILO 1034", "JUMADI 1035", "PENGKI FERNANDO 1036", "KARDI 1037", "AGUNG SETIAWAN 1038", "AGUS 1039", "SUYATNO 1040", "RUDIANTO 1041"] },
+  41: { nama: "EKO WAHYUDI S & YUDI ASWAN", kavling: ["ADI PURNAWAN 995", "SUKIMIN 994", "KARDI 993", "USUF BAHTIAR 992", "RUDI KURNIAWAN 991", "KATEMAN 970", "AGUNG SETIAWAN 971", "AMINUDIN 972", "ADI PURNAWAN 973", "M. ANSORI 974", "SULTAN SRI NANTO 1001", "M AGUS KHOIRUL UMAM 1002", "STIO WAHYUDI 1003", "M. YUSUF BAHTIAR 1004", "USUF BAHTIAR 1005", "SETIO WAHYUDI 1021", "KHOIRUDIN 1022", "PUJI WAHYU 1023", "BEJO WALUYO 1024", "RAIHAN, M yusuf  1025", "SAINO 1026", "ARI SUPARMANTO 1027", "YUSUF BAHTIAR 1028", "AGUNG SETIAWAN 1029", "TUNJANG 1030"] },
+  42: { nama: "EDI SUPARNO & SISWO PRANOTO", kavling: ["IKSAN YULIANTO 1042", "SUPARDI 1043", "STIO WAHYUDI 1044", "WAHYU GUNAWAN 1045", "ASMAWI 1046", "SUYATNO 1047", "AGUNG SETIAWAN 1048", "ASEP PRIHATA 1049", "KARDI 1050", "DEDEN SUBANDI 1051", "IRIANTO 1052", "EGO NOFRI ADI 1053", "HENDRIONO 1054", "DODI KURNIAWAN 1055", "DWI FAJAR 1056", "NANTO  1057", "RAIHHAN 1058", "DWI MARDIONO 1059", "JOKO SUSILO 1060", "TUNJANG 1061", "BUDI SUSILO 1062", "ADI SUPRAYITNO 1063", "FIRMAN ANDRINSYAH 1064", "M. AGUS KHOIRUL UMAM 1065", "JOKO SUSILO 1066"] },
+  43: { nama: "BUDIONO & SUGANDA", kavling: ["JUWANDA 1067", "RUDI KURNIAWAN/BUDI.S 1068", "PUJI WAHYU 1069", "DODIK KURNIAWAN 1070", "WANDA 1073", "WANDA 1074", "AMINUDIN 1075", "M. ANSORI 1076", "RISKI SULISTIO 1077", "SUKIMIN 1078", "LUTGIANTO  1079", "YUSUF BAHTIAR 1080", "RUDIANTO 1081", "ASEP PRIYATNO 1082", "IRIANTO 1083", "SAINO 1084", "IRVAN 1097", "PURWANTO 1098", "SUPARDI 1099", "IPUNG 1100", "NURFAHRUDIN 1101", "PENGKI FERNANDO 1102", "FENGKI FERNANDO 1103", "ASMAWI 1104", "SUYATNO 1105"] },
+  44: { nama: "AGUS SISWANTO & AHMAD SUJA'I", kavling: ["ARIS FAUZI 1071", "KARDI 1072", "FIRMAN ANDRIANSYAH 1085", "M KHOIRUL ANAS 1086", "SETIO WAHYUDI 1087", "WALJIMAN 1088", "ASEP PRIHATA 1089", "KATEMAN 1090", "SURANTO 1091", "AHMAD RIBUT BUDIONO 1092", "KHOIRUDIN 1093", "IKSAN YULIANTO 1094", "HENDRIONO 1095", "WANDA 1096", "ADI PURNAWAN 1106", "USUF BAHTIAR 1107", "SUPARDI 1108", "SAINO 1109", "ANTONI 1110", "IRIANTO 1111", "EGO NORVI ADI 1112", "DEDEN SUBANDI 1113", "TUNJANG 1131", "ARI SUPARMANTO 1132", "HENDRIONO 1133"] },
+  45: { nama: "DEDI ARDIANSYAH & ELI MULYADI", kavling: ["ARIS ARDIANSYAH 1114", "KARDI 1115", "BUDI SUSILO 1116", "EGO NOFRI ADI 1117", "JOKO SUSILO 1128", "FIRMAN ANDRIANSYAH 1127", "ADI SUPRAYITNO 1129", "AGUNG SETIAWAN 1130", "SUKIMIN 1134", "LUTGIANTO 1135", "PURWANTO 1137", "DWI MARDIONO 1139", "AGUS 1140", "PUJI WAHYU 1141", "HENDRIONO 1149", "PENGKI FERNANDO 1150", "DWI FAJAR 1151", "M. YUSUF BAHTIAR 1152", "DODI KURNIAWAN 1154", "RUDIANTO 1156", "IRIANTO 1157", "SOLEH 1155"] },
+  46: { nama: "SUPARDI & MARYANTO", kavling: ["SUKIMIN 1118", "ARI SUPARMANTO 1119", "SAINO 1120", "YUSUF BAHTIAR 1123", "SUYATNO 1124", "RUDIANTO 1125", "RISKI SULISTIO 1126", "KATEMAN 1142", "NANTO 1143", "RAIHAN 1144", "ASEP PRIYATNO 1145", "ADI PURNAWAN 1146", "M. ANSORI 1147", "MAWI 1148", "ARIS FAUJI 1158", "AGUNG SETIAWAN 1159", "IRIANTO 1160", "BEJO WALUYO 1161", "RUDI KURNIAWAN 1162", "ANTONI 1163", "JUMADI 1164", "AMINUDIN 1165", "SUPARDI 1166"] },
+  47: { nama: "NGATIJO & YUSUF", kavling: ["ARIS FAUJI 1167", "ASEP PRIHATA 1168", "AHMAD RIBUT BUDIONO 1169", "ARIS FAUZI 1170", "ADI PURNAWAN 1174", "SURANTO 1175", "STIO WAHYUDI 1176", "ARIS FAUJI 1177", "SUPARDI 1179", "JUMADI 1180", "WAHYU GUNAWAN 1181", "RAIHAN  1182", "HENDRIONO 1183", "SUYATNO 1184", "AGUNG SETIAWAN 1185", "M. ANSORI 1186", "EGO NOFRI ADI 1187", "KATEMAN 1188", "DODIK KURNIAWAN 1189", "IKSAN YULIANTO 1190", "ASMAWI 1191", "SAINO 1192", "USUF BAHTIAR 1193", "TUNJANG 1194"] },
+  48: { nama: "RUKITO & GOKLAS M.T", kavling: ["IRIANTO 1171", "SULTAN SRINANTO 1172", "SUKIMIN 1173", "RISKI SULISTIO 1195", "ASMAWI 1196", "JUMADI 1198", "DEDEN SUBANDI 1199", "PENGKI FERNANDO 1200", "LUTGIANTO 1201", "DWI MARDIONO 1202", "ADI PURNAWAN 1203", "SAINO 1204", "PORWANTO 1205", "PORWANTO 1206", "M ANSORI 1207", "ARIS ARDIANSYAH 1208", "PORWANTO 1210", "KARDIANSAH 1211", "BEJO WALUYO 1212", "AGUS 1213", "DODIK KURNIAWAN 1214", "DODI KURNIAWAN 1215", "FIRMAN ARDIANSYAH 1216"] }
 };
 
-// Inisialisasi dropdown nomor 37-48
-function initDropdowns() {
-  const dropdownNo = document.getElementById('dropdown_no');
-  
-  // Tambahkan opsi 37-48
-  for (let i = 37; i <= 48; i++) {
-    const option = document.createElement('option');
-    option.value = i;
-    option.textContent = i;
-    dropdownNo.appendChild(option);
-  }
-}
-
-// Update dropdown kavling berdasarkan pilihan nomor
-function updateKavlingDropdown() {
-  const selectedNo = document.getElementById('dropdown_no').value;
+// Update data berdasarkan kelompok yang dipilih
+function updateDataKelompok() {
+  const selectedValue = document.getElementById('dropdown_kelompok').value;
+  const infoKelompok = document.getElementById('infoKelompok');
   const dropdownKavling = document.getElementById('dropdown_kavling');
   const selectedInfo = document.getElementById('selectedInfo');
   
   // Reset dropdown kavling
   dropdownKavling.innerHTML = '<option value="">-- Pilih Kavling --</option>';
   
-  if (selectedNo && kavlingData[selectedNo]) {
-    // Tambahkan opsi kavling berdasarkan nomor yang dipilih
-    kavlingData[selectedNo].forEach(kavling => {
+  if (selectedValue && dataKelompok[selectedValue]) {
+    kelompokTerpilih = selectedValue;
+    
+    // Update info kelompok
+    infoKelompok.textContent = `Kelompok: ${dataKelompok[selectedValue].nama}`;
+    infoKelompok.className = "text-xs md:text-sm text-green-600 font-medium";
+    
+    // Update dropdown kavling
+    dataKelompok[selectedValue].kavling.forEach(kavling => {
       const option = document.createElement('option');
       option.value = kavling;
       option.textContent = kavling;
       dropdownKavling.appendChild(option);
     });
     
-    selectedInfo.textContent = `Nomor ${selectedNo} dipilih. Tersedia ${kavlingData[selectedNo].length} kavling.`;
-    selectedInfo.className = "text-sm text-green-600 font-medium mt-1";
+    selectedInfo.textContent = `${dataKelompok[selectedValue].kavling.length} kavling tersedia`;
+    selectedInfo.className = "text-xs md:text-sm text-gray-600 mt-1";
+    
+    // Auto focus ke tanggal
+    document.getElementById('tanggal').focus();
   } else {
+    kelompokTerpilih = null;
+    infoKelompok.textContent = "";
     selectedInfo.textContent = "";
   }
-}
-
-// Hitung total tandan secara otomatis
-function hitungTotalTandan() {
-  const tandanMentah = parseInt(document.getElementById('tandan_mentah').value) || 0;
-  const tandanBusuk = parseInt(document.getElementById('tandan_busuk').value) || 0;
-  const jangkos = parseInt(document.getElementById('jangkos').value) || 0;
-  const total = tandanMentah + tandanBusuk + jangkos;
-  
-  document.getElementById('total_tandan').value = total;
 }
 
 // Format tanggal ke Indonesia
@@ -245,10 +332,20 @@ function formatTanggal(tanggal) {
   });
 }
 
+// Format tanggal singkat untuk mobile
+function formatTanggalSingkat(tanggal) {
+  if (!tanggal) return '-';
+  const date = new Date(tanggal);
+  return date.toLocaleDateString('id-ID', {
+    day: '2-digit',
+    month: '2-digit'
+  });
+}
+
 // Validasi input
 function validasiInput(data) {
-  if (!data.kelompok || !data.nama) {
-    alert('Kelompok dan Nama wajib diisi!');
+  if (!data.kelompok_nomor) {
+    alert('Pilih kelompok terlebih dahulu!');
     return false;
   }
   
@@ -257,7 +354,11 @@ function validasiInput(data) {
     return false;
   }
   
-  // Cek kavling (dropdown atau manual)
+  if (!data.nama) {
+    alert('Nama pemanen harus diisi!');
+    return false;
+  }
+  
   if (!data.kavling) {
     alert('Nomor Kavling harus dipilih atau diisi manual!');
     return false;
@@ -268,13 +369,7 @@ function validasiInput(data) {
 
 // Tambah data ke tabel
 function tambahData() {
-  const tandanMentah = parseInt(document.getElementById('tandan_mentah').value) || 0;
-  const tandanBusuk = parseInt(document.getElementById('tandan_busuk').value) || 0;
-  const jangkos = parseInt(document.getElementById('jangkos').value) || 0;
-  const totalTandan = tandanMentah + tandanBusuk + jangkos;
-  
   // Ambil nilai dari dropdown atau input manual
-  const selectedNo = document.getElementById('dropdown_no').value;
   const selectedKavling = document.getElementById('dropdown_kavling').value;
   const manualKavling = document.getElementById('kavling_manual').value.trim();
   
@@ -283,17 +378,16 @@ function tambahData() {
   
   const data = {
     no: nomorUrut,
-    kelompok: document.getElementById('kelompok').value.trim(),
+    kelompok_nomor: kelompokTerpilih,
+    kelompok_nama: kelompokTerpilih ? dataKelompok[kelompokTerpilih].nama : '',
     tanggal: document.getElementById('tanggal').value,
     nama: document.getElementById('nama').value.trim(),
-    nomor_dropdown: selectedNo || '', // Simpan nomor dari dropdown 37-48
     kavling: kavlingValue,
-    tandan_mentah: tandanMentah,
-    tandan_busuk: tandanBusuk,
-    jangkos: jangkos,
-    total_tandan: totalTandan,
-    berondolan: parseFloat(document.getElementById('berondolan').value) || 0,
-    hasil: parseFloat(document.getElementById('hasil').value) || 0
+    tandan_mentah: parseInt(document.getElementById('tandan_mentah').value) || 0,
+    tandan_matang: parseInt(document.getElementById('tandan_matang').value) || 0,
+    tandan_busuk: parseInt(document.getElementById('tandan_busuk').value) || 0,
+    jangkos: parseInt(document.getElementById('jangkos').value) || 0,
+    berondolan: parseFloat(document.getElementById('berondolan').value) || 0
   };
 
   if (!validasiInput(data)) return;
@@ -303,93 +397,95 @@ function tambahData() {
   
   updateTabel();
   resetInput();
-  document.getElementById('statusForm').innerText = `✓ Data berhasil ditambahkan! Total: ${dataPanen.length} data`;
-  document.getElementById('statusForm').className = "text-center text-sm mt-2 text-green-600 font-medium";
+  
+  // Update status dengan animasi
+  const statusForm = document.getElementById('statusForm');
+  statusForm.innerText = `✓ Data ditambahkan! Total: ${dataPanen.length}`;
+  statusForm.className = "text-center text-xs md:text-sm mt-2 text-green-600 font-medium";
+  
+  // Reset status setelah 3 detik
+  setTimeout(() => {
+    statusForm.innerText = "";
+  }, 3000);
 }
 
-// Update tabel tampilan
+// Update tabel tampilan untuk mobile
 function updateTabel() {
   const tbody = document.getElementById('tabelBody');
-  const tfoot = document.getElementById('tabelFooter');
+  const totalDataEl = document.getElementById('totalData');
+  const totalDataMobile = document.getElementById('totalDataMobile');
+  
   tbody.innerHTML = '';
   
   if (dataPanen.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="13" class="border border-gray-300 p-4 text-center text-gray-500">
-          Belum ada data. Silakan tambah data terlebih dahulu.
+        <td colspan="11" class="border border-gray-300 p-4 text-center text-gray-500 text-sm">
+          Belum ada data. Tambah data terlebih dahulu.
         </td>
       </tr>
     `;
-    tfoot.innerHTML = '';
-    document.getElementById('statusTabel').innerText = "Tabel kosong. Tambah data untuk memulai.";
+    
+    // Update total info
+    totalDataEl.textContent = "0 data";
+    totalDataMobile.textContent = "0";
+    document.getElementById('totalMentahMobile').textContent = "0";
+    document.getElementById('totalMatangMobile').textContent = "0";
+    document.getElementById('totalBusukMobile').textContent = "0";
+    
+    document.getElementById('statusTabel').innerText = "Tabel kosong";
     return;
   }
   
   // Hitung total keseluruhan
   let totalMentah = 0;
+  let totalMatang = 0;
   let totalBusuk = 0;
   let totalJangkos = 0;
-  let totalSemuaTandan = 0;
   let totalBerondolan = 0;
-  let totalHasil = 0;
   
   dataPanen.forEach((data, index) => {
     totalMentah += data.tandan_mentah;
+    totalMatang += data.tandan_matang;
     totalBusuk += data.tandan_busuk;
     totalJangkos += data.jangkos;
-    totalSemuaTandan += data.total_tandan;
     totalBerondolan += data.berondolan;
-    totalHasil += data.hasil;
     
     const row = document.createElement('tr');
     row.className = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
     row.innerHTML = `
-      <td class="border border-gray-300 p-2">${data.no}</td>
-      <td class="border border-gray-300 p-2">${data.kelompok}</td>
-      <td class="border border-gray-300 p-2">${formatTanggal(data.tanggal)}</td>
-      <td class="border border-gray-300 p-2">${data.nama}</td>
-      <td class="border border-gray-300 p-2 text-center ${data.nomor_dropdown ? 'bg-blue-50 font-medium' : ''}">
-        ${data.nomor_dropdown || '-'}
-      </td>
-      <td class="border border-gray-300 p-2 ${data.nomor_dropdown ? 'bg-green-50' : ''}">
-        ${data.kavling}
-      </td>
-      <td class="border border-gray-300 p-2 text-right">${data.tandan_mentah}</td>
-      <td class="border border-gray-300 p-2 text-right">${data.tandan_busuk}</td>
-      <td class="border border-gray-300 p-2 text-right">${data.jangkos}</td>
-      <td class="border border-gray-300 p-2 text-right font-semibold">${data.total_tandan}</td>
-      <td class="border border-gray-300 p-2 text-right">${data.berondolan.toFixed(1)}</td>
-      <td class="border border-gray-300 p-2 text-right">${data.hasil.toFixed(1)}</td>
+      <td class="border border-gray-300 p-2 text-center text-xs">${data.no}</td>
+      <td class="border border-gray-300 p-2 text-xs truncate max-w-[60px] md:max-w-none" title="${data.kelompok_nama}">${data.kelompok_nomor}</td>
+      <td class="border border-gray-300 p-2 text-xs text-center hidden md:table-cell">${formatTanggalSingkat(data.tanggal)}</td>
+      <td class="border border-gray-300 p-2 text-xs truncate max-w-[50px]" title="${data.nama}">${data.nama.substring(0, 6)}${data.nama.length > 6 ? '...' : ''}</td>
+      <td class="border border-gray-300 p-2 text-xs text-center bg-green-50">${data.kavling}</td>
+      <td class="border border-gray-300 p-2 text-xs text-center">${data.tandan_mentah}</td>
+      <td class="border border-gray-300 p-2 text-xs text-center hidden sm:table-cell">${data.tandan_matang}</td>
+      <td class="border border-gray-300 p-2 text-xs text-center">${data.tandan_busuk}</td>
+      <td class="border border-gray-300 p-2 text-xs text-center hidden sm:table-cell">${data.jangkos}</td>
+      <td class="border border-gray-300 p-2 text-xs text-center">${data.berondolan.toFixed(1)}</td>
       <td class="border border-gray-300 p-2 text-center">
-        <button onclick="hapusData(${index})" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm transition duration-200">
-          Hapus
+        <button onclick="hapusData(${index})" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs transition duration-200">
+          ❌
         </button>
       </td>
     `;
     tbody.appendChild(row);
   });
   
-  // Update footer dengan total
-  tfoot.innerHTML = `
-    <tr class="bg-green-50">
-      <td class="border border-gray-300 p-2 font-bold" colspan="6">TOTAL</td>
-      <td class="border border-gray-300 p-2 text-right font-bold">${totalMentah}</td>
-      <td class="border border-gray-300 p-2 text-right font-bold">${totalBusuk}</td>
-      <td class="border border-gray-300 p-2 text-right font-bold">${totalJangkos}</td>
-      <td class="border border-gray-300 p-2 text-right font-bold text-green-700">${totalSemuaTandan}</td>
-      <td class="border border-gray-300 p-2 text-right font-bold">${totalBerondolan.toFixed(1)}</td>
-      <td class="border border-gray-300 p-2 text-right font-bold">${totalHasil.toFixed(1)}</td>
-      <td class="border border-gray-300 p-2"></td>
-    </tr>
-  `;
+  // Update total info mobile
+  totalDataEl.textContent = `${dataPanen.length} data`;
+  totalDataMobile.textContent = dataPanen.length;
+  document.getElementById('totalMentahMobile').textContent = totalMentah;
+  document.getElementById('totalMatangMobile').textContent = totalMatang;
+  document.getElementById('totalBusukMobile').textContent = totalBusuk;
   
-  document.getElementById('statusTabel').innerText = `Data siap diekspor. Total: ${dataPanen.length} entri`;
+  document.getElementById('statusTabel').innerText = `✓ ${dataPanen.length} data tersimpan`;
 }
 
 // Hapus data
 function hapusData(index) {
-  if (confirm('Apakah Anda yakin ingin menghapus data ini?')) {
+  if (confirm('Hapus data ini?')) {
     dataPanen.splice(index, 1);
     // Perbarui nomor urut
     dataPanen.forEach((data, i) => {
@@ -397,58 +493,71 @@ function hapusData(index) {
     });
     nomorUrut = dataPanen.length + 1;
     updateTabel();
-    document.getElementById('statusForm').innerText = `Data berhasil dihapus! Total: ${dataPanen.length} data`;
-    document.getElementById('statusForm').className = "text-center text-sm mt-2 text-blue-600 font-medium";
+    
+    const statusForm = document.getElementById('statusForm');
+    statusForm.innerText = `Data dihapus! Sisa: ${dataPanen.length} data`;
+    statusForm.className = "text-center text-xs md:text-sm mt-2 text-blue-600 font-medium";
+    
+    setTimeout(() => {
+      statusForm.innerText = "";
+    }, 3000);
   }
 }
 
-// Reset input form
+// Reset input form (tidak reset kelompok)
 function resetInput() {
   document.getElementById('nama').value = '';
   document.getElementById('tandan_mentah').value = '';
+  document.getElementById('tandan_matang').value = '';
   document.getElementById('tandan_busuk').value = '';
   document.getElementById('jangkos').value = '';
-  document.getElementById('total_tandan').value = '';
   document.getElementById('berondolan').value = '';
-  document.getElementById('hasil').value = '';
   document.getElementById('kavling_manual').value = '';
   
-  // Reset dropdowns ke nilai default
-  document.getElementById('dropdown_no').selectedIndex = 0;
-  document.getElementById('dropdown_kavling').innerHTML = '<option value="">-- Pilih Kavling --</option>';
-  document.getElementById('selectedInfo').textContent = '';
+  // Reset dropdown kavling ke default
+  document.getElementById('dropdown_kavling').selectedIndex = 0;
+  document.getElementById('selectedInfo').textContent = kelompokTerpilih ? 
+    `${dataKelompok[kelompokTerpilih].kavling.length} kavling tersedia` : "";
   
-  document.getElementById('nama').focus();
+  // Fokus ke input tanggal
+  document.getElementById('tanggal').focus();
 }
 
 // Reset semua data
 function resetForm() {
   if (dataPanen.length === 0) {
-    document.getElementById('statusAksi').innerText = "Tidak ada data untuk direset.";
-    document.getElementById('statusAksi').className = "text-center text-sm mt-2 text-yellow-600 font-medium";
+    const statusAksi = document.getElementById('statusAksi');
+    statusAksi.innerText = "Tidak ada data untuk direset";
+    statusAksi.className = "text-center text-xs md:text-sm mt-2 text-yellow-600 font-medium";
     return;
   }
   
-  if (confirm(`Apakah Anda yakin ingin menghapus SEMUA data (${dataPanen.length} entri)?`)) {
+  if (confirm(`Hapus semua data (${dataPanen.length} entri)?`)) {
     dataPanen = [];
     nomorUrut = 1;
-    document.getElementById('kelompok').value = '';
+    document.getElementById('dropdown_kelompok').selectedIndex = 0;
     document.getElementById('tanggal').value = '';
+    kelompokTerpilih = null;
+    document.getElementById('infoKelompok').textContent = "";
     resetInput();
     updateTabel();
-    document.getElementById('statusForm').innerText = "Form telah direset.";
-    document.getElementById('statusForm').className = "text-center text-sm mt-2 text-gray-600";
-    document.getElementById('statusTabel').innerText = "Semua data telah dihapus.";
-    document.getElementById('statusAksi').innerText = "✓ Semua data berhasil direset.";
-    document.getElementById('statusAksi').className = "text-center text-sm mt-2 text-green-600 font-medium";
+    
+    const statusAksi = document.getElementById('statusAksi');
+    statusAksi.innerText = "✓ Semua data direset";
+    statusAksi.className = "text-center text-xs md:text-sm mt-2 text-green-600 font-medium";
+    
+    setTimeout(() => {
+      statusAksi.innerText = "";
+    }, 3000);
   }
 }
 
 // Cetak PDF menggunakan jsPDF
 function cetakPDF() {
   if (dataPanen.length === 0) {
-    document.getElementById('statusAksi').innerText = "Tidak ada data untuk dicetak. Silakan tambah data terlebih dahulu.";
-    document.getElementById('statusAksi').className = "text-center text-sm mt-2 text-yellow-600 font-medium";
+    const statusAksi = document.getElementById('statusAksi');
+    statusAksi.innerText = "Tidak ada data untuk dicetak";
+    statusAksi.className = "text-center text-xs md:text-sm mt-2 text-yellow-600 font-medium";
     return;
   }
 
@@ -456,34 +565,32 @@ function cetakPDF() {
   const doc = new jsPDF('landscape');
   
   // Judul
-  doc.setFontSize(18);
+  doc.setFontSize(16);
   doc.text('LAPORAN PANEN SAWIT', 148, 15, { align: 'center' });
   
   // Informasi header
-  doc.setFontSize(10);
+  doc.setFontSize(9);
   doc.text(`Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}`, 14, 25);
   doc.text(`Total Data: ${dataPanen.length} entri`, 14, 32);
-  doc.text(`Kelompok: ${dataPanen[0].kelompok}`, 14, 39);
+  doc.text(`Kelompok: ${dataPanen[0].kelompok_nama}`, 14, 39);
   
   // Header tabel
   const headers = [
-    ['No', 'Kelompok', 'Tanggal', 'Nama', 'No (37-48)', 'Kavling', 'T. Mentah', 'T. Busuk', 'Jangkos', 'Total', 'Berondolan (Kg)', 'Hasil (Kg)']
+    ['No', 'Kel', 'Tanggal', 'Nama', 'Kavling', 'T.Mnt', 'T.Mtg', 'T.Bsk', 'Jkg', 'Brdln']
   ];
   
   // Data tabel
   const tableData = dataPanen.map(data => [
     data.no,
-    data.kelompok,
+    data.kelompok_nomor,
     formatTanggal(data.tanggal),
     data.nama,
-    data.nomor_dropdown || '-',
     data.kavling,
     data.tandan_mentah.toString(),
+    data.tandan_matang.toString(),
     data.tandan_busuk.toString(),
     data.jangkos.toString(),
-    data.total_tandan.toString(),
-    data.berondolan.toFixed(1),
-    data.hasil.toFixed(1)
+    data.berondolan.toFixed(1)
   ]);
   
   // Buat tabel
@@ -493,63 +600,62 @@ function cetakPDF() {
     startY: 45,
     theme: 'grid',
     styles: { fontSize: 8, cellPadding: 2 },
-    headStyles: { fillColor: [34, 139, 34] }, // Warna hijau
+    headStyles: { fillColor: [34, 139, 34] },
     margin: { horizontal: 10 }
   });
   
   // Hitung total
   const totalMentah = dataPanen.reduce((sum, data) => sum + data.tandan_mentah, 0);
+  const totalMatang = dataPanen.reduce((sum, data) => sum + data.tandan_matang, 0);
   const totalBusuk = dataPanen.reduce((sum, data) => sum + data.tandan_busuk, 0);
   const totalJangkos = dataPanen.reduce((sum, data) => sum + data.jangkos, 0);
-  const totalSemuaTandan = dataPanen.reduce((sum, data) => sum + data.total_tandan, 0);
   const totalBerondolan = dataPanen.reduce((sum, data) => sum + data.berondolan, 0);
-  const totalHasil = dataPanen.reduce((sum, data) => sum + data.hasil, 0);
   
   // Footer dengan total
   const finalY = doc.lastAutoTable.finalY || 100;
-  doc.setFontSize(10);
+  doc.setFontSize(9);
   doc.setFont(undefined, 'bold');
   doc.text('TOTAL:', 14, finalY + 10);
-  doc.text(`Mentah: ${totalMentah}`, 50, finalY + 10);
-  doc.text(`Busuk: ${totalBusuk}`, 80, finalY + 10);
-  doc.text(`Jangkos: ${totalJangkos}`, 110, finalY + 10);
-  doc.text(`Total Tandan: ${totalSemuaTandan}`, 140, finalY + 10);
-  doc.text(`Berondolan: ${totalBerondolan.toFixed(1)} Kg`, 180, finalY + 10);
-  doc.text(`Hasil: ${totalHasil.toFixed(1)} Kg`, 220, finalY + 10);
+  doc.text(`T.Mnt: ${totalMentah}`, 45, finalY + 10);
+  doc.text(`T.Mtg: ${totalMatang}`, 75, finalY + 10);
+  doc.text(`T.Bsk: ${totalBusuk}`, 105, finalY + 10);
+  doc.text(`Jkg: ${totalJangkos}`, 135, finalY + 10);
+  doc.text(`Brdln: ${totalBerondolan.toFixed(1)} Kg`, 165, finalY + 10);
   
   // Simpan PDF
   const tanggal = new Date().toISOString().slice(0,10);
-  doc.save(`Laporan_Panen_Sawit_${tanggal}.pdf`);
+  doc.save(`Panen_Sawit_${tanggal}.pdf`);
   
-  document.getElementById('statusAksi').innerText = "✓ PDF berhasil dibuat dan diunduh!";
-  document.getElementById('statusAksi').className = "text-center text-sm mt-2 text-green-600 font-medium";
+  const statusAksi = document.getElementById('statusAksi');
+  statusAksi.innerText = "✓ PDF berhasil diunduh";
+  statusAksi.className = "text-center text-xs md:text-sm mt-2 text-green-600 font-medium";
 }
 
 // Unduh data sebagai CSV
 function unduhCSV() {
   if (dataPanen.length === 0) {
-    document.getElementById('statusAksi').innerText = "Tidak ada data untuk diunduh. Silakan tambah data terlebih dahulu.";
-    document.getElementById('statusAksi').className = "text-center text-sm mt-2 text-yellow-600 font-medium";
+    const statusAksi = document.getElementById('statusAksi');
+    statusAksi.innerText = "Tidak ada data untuk diunduh";
+    statusAksi.className = "text-center text-xs md:text-sm mt-2 text-yellow-600 font-medium";
     return;
   }
   
   // Header CSV
-  let csv = 'No,Kelompok,Tanggal,Nama,Nomor (37-48),Kavling,Tandan Mentah,Tandan Busuk,Jangkos,Total Tandan,Berondolan (Kg),Hasil (Kg)\n';
+  let csv = 'No,Kelompok,Kelompok Nama,Tanggal,Nama,Kavling,Tandan Mentah,Tandan Matang,Tandan Busuk,Jangkos,Berondolan (Kg)\n';
   
   // Data CSV
   dataPanen.forEach(data => {
-    csv += `${data.no},${data.kelompok},${formatTanggal(data.tanggal)},${data.nama},${data.nomor_dropdown || ''},${data.kavling},${data.tandan_mentah},${data.tandan_busuk},${data.jangkos},${data.total_tandan},${data.berondolan.toFixed(1)},${data.hasil.toFixed(1)}\n`;
+    csv += `${data.no},${data.kelompok_nomor},"${data.kelompok_nama}",${formatTanggal(data.tanggal)},"${data.nama}",${data.kavling},${data.tandan_mentah},${data.tandan_matang},${data.tandan_busuk},${data.jangkos},${data.berondolan.toFixed(1)}\n`;
   });
   
   // Hitung total untuk CSV
   const totalMentah = dataPanen.reduce((sum, data) => sum + data.tandan_mentah, 0);
+  const totalMatang = dataPanen.reduce((sum, data) => sum + data.tandan_matang, 0);
   const totalBusuk = dataPanen.reduce((sum, data) => sum + data.tandan_busuk, 0);
   const totalJangkos = dataPanen.reduce((sum, data) => sum + data.jangkos, 0);
-  const totalSemuaTandan = dataPanen.reduce((sum, data) => sum + data.total_tandan, 0);
   const totalBerondolan = dataPanen.reduce((sum, data) => sum + data.berondolan, 0);
-  const totalHasil = dataPanen.reduce((sum, data) => sum + data.hasil, 0);
   
-  csv += `\nTOTAL,,,,,${totalMentah},${totalBusuk},${totalJangkos},${totalSemuaTandan},${totalBerondolan.toFixed(1)},${totalHasil.toFixed(1)}\n`;
+  csv += `\nTOTAL,,,,,${totalMentah},${totalMatang},${totalBusuk},${totalJangkos},${totalBerondolan.toFixed(1)}\n`;
   
   // Buat blob dan unduh
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -557,24 +663,30 @@ function unduhCSV() {
   const url = URL.createObjectURL(blob);
   
   link.setAttribute('href', url);
-  link.setAttribute('download', `data_panen_sawit_${new Date().toISOString().slice(0,10)}.csv`);
-  link.style.visibility = 'hidden';
+  link.setAttribute('download', `panen_sawit_${new Date().toISOString().slice(0,10)}.csv`);
   
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
   
-  document.getElementById('statusAksi').innerText = "✓ File CSV berhasil diunduh!";
-  document.getElementById('statusAksi').className = "text-center text-sm mt-2 text-green-600 font-medium";
+  const statusAksi = document.getElementById('statusAksi');
+  statusAksi.innerText = "✓ CSV berhasil diunduh";
+  statusAksi.className = "text-center text-xs md:text-sm mt-2 text-green-600 font-medium";
 }
 
 // Inisialisasi
 window.onload = function() {
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('tanggal').value = today;
-  initDropdowns(); // Inisialisasi dropdowns
-  document.getElementById('kelompok').focus();
+  
+  // Set tinggi viewport untuk mobile
+  document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
 };
+
+// Handle resize untuk mobile
+window.addEventListener('resize', () => {
+  document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+});
 </script>
 
 </body>
