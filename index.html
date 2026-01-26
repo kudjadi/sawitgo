@@ -160,7 +160,7 @@
     <div class="d-flex align-items-center">
       <i class="bi bi-google me-2"></i>
       <div>
-        <span>Data tersimpan di Online Google</span>
+        <span>tersimpan di Online</span>
         <small class="d-block" id="connectionStatus">
           <span id="statusText">Memuat...</span>
           <a href="https://docs.google.com/spreadsheets/d/1BC1kS6M4wu3OtPeK3HCjMYvTa8Ro_TrJz_Nfqb-I2as/edit?gid=0#gid=0" 
@@ -437,7 +437,7 @@
       
       // Update tampilan
       updateAllViews();
-      updateStatus('connected', `Data dimuat: ${result.count} entri`);
+      updateStatus('connected', `Data : ${result.count} entri`);
       lastUpdate.textContent = formatTime(new Date());
       
       return true;
@@ -874,23 +874,23 @@
                 oninput="document.getElementById('preview${uniqueId}').textContent=this.value||'[Klik untuk isi]'">
             </div>
             <div class="col-6 col-md-3">
-              <label class="form-label">Tandan Matang <small class="text-muted">(optional)</small></label>
+              <label class="form-label">#Tandan Matang</label>
               <input type="number" class="form-control form-control-sm matang" min="0" value="0" placeholder="0">
             </div>
             <div class="col-6 col-md-3">
-              <label class="form-label">Tandan Mentah <small class="text-muted">(optional)</small></label>
+              <label class="form-label">#Tandan Mentah</label>
               <input type="number" class="form-control form-control-sm mentah" min="0" value="0" placeholder="0">
             </div>
             <div class="col-6 col-md-3">
-              <label class="form-label">Tandan Busuk <small class="text-muted">(optional)</small></label>
+              <label class="form-label">#Tandan Busuk</label>
               <input type="number" class="form-control form-control-sm busuk" min="0" value="0" placeholder="0">
             </div>
             <div class="col-6 col-md-3">
-              <label class="form-label">Tandan Jangkos <small class="text-muted">(optional)</small></label>
+              <label class="form-label">#Tandan Jangkos</label>
               <input type="number" class="form-control form-control-sm jangkos" min="0" value="0" placeholder="0">
             </div>
             <div class="col-12 col-md-6">
-              <label class="form-label">Berondolan <small class="text-muted">(optional)</small></label>
+              <label class="form-label">#Berondolan (kg)</label>
               <input type="number" class="form-control form-control-sm berondolan" min="0" value="0" placeholder="0">
             </div>
           </div>
@@ -939,7 +939,7 @@
   const alertDiv = document.querySelector('.alert-info');
   const clearBtn = document.createElement('button');
   clearBtn.className = 'btn btn-sm btn-outline-danger ms-2';
-  clearBtn.innerHTML = '<i class="bi bi-trash"></i> Hapus Semua';
+  clearBtn.innerHTML = '<i class="bi bi-trash"></i> Delete';
   clearBtn.onclick = clearAllData;
   alertDiv.querySelector('.d-flex').appendChild(clearBtn);
   
