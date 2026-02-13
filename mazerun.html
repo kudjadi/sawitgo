@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>labirin cat · sederhana</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+        body {
+            background: #1e3c42;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: sans-serif;
+        }
+        .game {
+            background: #153137;
+            padding: 20px;
+            border-radius: 28px;
+            box-shadow: 0 15px 25px rgba(0,0,0,0.6);
+        }
+        canvas {
+            display: block;
+            margin: 0 auto;
+            border-radius: 12px;
+            box-shadow: inset 0 0 0 2px #0d1f22, 0 10px 12px black;
+            width: 500px;
+            height: 500px;
+            cursor: pointer;
+        }
+        .bawah {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 18px;
+            color: white;
+            padding: 0 10px;
+        }
+        .persen {
+            background: #0a1b1f;
+            padding: 8px 24px;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: #b7f0ff;
+            border-bottom: 3px solid #31939e;
+        }
+        button {
+            background: #2a676e;
+            border: 0;
+            border-bottom: 5px solid #0e3338;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+            padding: 8px 26px;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: 0.05s;
+            box-shadow: 0 6px 0 #062023;
+        }
+        button:active {
+            transform: translateY(5px);
+            box-shadow: 0 2px 0 #062023;
+            border-bottom-width: 2px;
+        }
+    </style>
+</head>
+<body>
+<div class="game">
+    <!-- canvas ukuran 500x500, 25x25 kotak (@ 20px) -->
+    <canvas id="canvas" width="500" height="500"></canvas>
+    <div class="bawah">
+        <span class="persen" id="tampil">0%</span>
+        <button id="reset">acak maze</button>
+    </div>
+</div>
+
+<script>
+    // ===== MAZE SEDERHANA =====
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const tampil = document.getElementById('tampil');
+
+    const KOTAK = 20;       // 20px per cell
+    const UKURAN = 25;      // 25x25 grid
+    
+    let dinding = [];       // true = tembok
+    let cat = [];          // true = sudah diwarnai
+    let totalLantai = 0;
+    let warnaCount = 0;
+
+    let lagiCat = false;
+    let lastBaris = -1, lastKolom = -1;
+
+    // ----- bikin maze acak (sederhana: randomized DFS) -----
+    function buatMaze() {
+        // isi semua jadi tembok dulu
+        dinding = Array(UKURAN).fill().map(() => Array(UKURAN).fill(true));
+        
+        // fungsi lorong
+        function jalan(x, y) {
+            dinding[y][x] = false;
+            let arah = [[0,-2],[0,2],[-2,0],[2,0]];
+            // acak urutan
+            for (let i = arah.length - 1; i > 0; i--) {
+                let j = Math.floor(Math.random() * (i + 1));
+                [arah[i], arah[j]] = [arah[j], arah[i]];
+            }
+            for (let [dx, dy] of arah) {
+                let nx = x + dx, ny = y + dy;
+                if (nx > 0 && nx < UKURAN-1 && ny > 0 && ny < UKURAN-1 && dinding[ny][nx] === true) {
+                    dinding[y + dy/2][x + dx/2] = false; // buka tengah
+                    jalan(nx, ny);
+                }
+            }
+        }
+        // mulai dari pojok dalam
+        jalan(1, 1);
+        
+        // pinggir jadi tembok semua biar rapi
+        for (let i = 0; i < UKURAN; i++) {
+            dinding[0][i] = true;
+            dinding[UKURAN-1][i] = true;
+            dinding[i][0] = true;
+            dinding[i][UKURAN-1] = true;
+        }
+        // pastiin start & finish kebuka
+        dinding[1][1] = false;
+        dinding[UKURAN-2][UKURAN-2] = false;
+    }
+
+    // ----- reset cat (hapus semua warna) -----
+    function resetCat() {
+        totalLantai = 0;
+        for (let r = 0; r < UKURAN; r++) {
+            for (let c = 0; c < UKURAN; c++) {
+                if (!dinding[r][c]) totalLantai++;
+            }
+        }
+        cat = Array(UKURAN).fill().map(() => Array(UKURAN).fill(false));
+        warnaCount = 0;
+        tampil.innerText = '0%';
+    }
+
+    // ----- ngegambar maze + cat -----
+    function gambar() {
+        ctx.clearRect(0, 0, 500, 500);
+        for (let r = 0; r < UKURAN; r++) {
+            for (let c = 0; c < UKURAN; c++) {
+                let x = c * KOTAK, y = r * KOTAK;
+                if (dinding[r][c]) {
+                    // tembok abu-abu gelap
+                    ctx.fillStyle = '#1f3a42';
+                    ctx.fillRect(x, y, KOTAK-1, KOTAK-1);
+                    // guratan
+                    ctx.fillStyle = '#0e1e22';
+                    ctx.fillRect(x+2, y+2, KOTAK-5, KOTAK-5);
+                } else {
+                    // lantai
+                    ctx.fillStyle = '#345f68';
+                    ctx.fillRect(x, y, KOTAK-1, KOTAK-1);
+                    // kalau sudah dicat
+                    if (cat[r][c]) {
+                        ctx.fillStyle = '#fcd34d';  // warna kuning cerah
+                        ctx.shadowBlur = 5;
+                        ctx.shadowColor = '#ffb142';
+                        ctx.fillRect(x+2, y+2, KOTAK-5, KOTAK-5);
+                        ctx.shadowBlur = 0;
+                    } else {
+                        // titik kecil biar keliatan
+                        ctx.fillStyle = '#254a52';
+                        ctx.fillRect(x+6, y+6, KOTAK-13, KOTAK-13);
+                    }
+                }
+            }
+        }
+        // tanda start & finish kecil
+        ctx.font = '14px sans-serif';
+        ctx.fillStyle = '#ffeeaa';
+        ctx.fillText('🚪', 5, 22);
+        ctx.fillStyle = '#ffd966';
+        ctx.fillText('🏁', 460, 485);
+    }
+
+    // ----- coba cat cell -----
+    function cobaCat(baris, kolom) {
+        if (baris < 0 || baris >= UKURAN || kolom < 0 || kolom >= UKURAN) return false;
+        if (dinding[baris][kolom]) return false;  // kena tembok gak bisa
+        if (cat[baris][kolom]) return false;      // sudah di cat
+        
+        cat[baris][kolom] = true;
+        warnaCount++;
+        let persen = totalLantai === 0 ? 0 : Math.round((warnaCount / totalLantai) * 100);
+        tampil.innerText = persen + '%';
+        return true;
+    }
+
+    // ----- cek tetangga (buat brush sederhana) -----
+    function bersebelahan(baris, kolom) {
+        if (lastBaris === -1 || lastKolom === -1) return true;
+        let dr = Math.abs(baris - lastBaris);
+        let dk = Math.abs(kolom - lastKolom);
+        return (dr === 1 && dk === 0) || (dr === 0 && dk === 1);
+    }
+
+    // ----- mouse event -----
+    function mouseDown(e) {
+        e.preventDefault();
+        let rect = canvas.getBoundingClientRect();
+        let scale = canvas.width / rect.width;
+        let canvasX = (e.clientX - rect.left) * scale;
+        let canvasY = (e.clientY - rect.top) * scale;
+        let kolom = Math.floor(canvasX / KOTAK);
+        let baris = Math.floor(canvasY / KOTAK);
+        
+        if (!dinding[baris][kolom]) {
+            lagiCat = true;
+            if (cobaCat(baris, kolom)) {
+                lastBaris = baris;
+                lastKolom = kolom;
+            }
+            gambar();
+        }
+    }
+
+    function mouseMove(e) {
+        if (!lagiCat) return;
+        e.preventDefault();
+        let rect = canvas.getBoundingClientRect();
+        let scale = canvas.width / rect.width;
+        let canvasX = (e.clientX - rect.left) * scale;
+        let canvasY = (e.clientY - rect.top) * scale;
+        let kolom = Math.floor(canvasX / KOTAK);
+        let baris = Math.floor(canvasY / KOTAK);
+        
+        if (baris < 0 || baris >= UKURAN || kolom < 0 || kolom >= UKURAN) return;
+        if (dinding[baris][kolom]) return;  // tembok gak tembus
+        
+        // aturan sederhana: harus bersebelahan dengan cat sebelumnya
+        if (bersebelahan(baris, kolom)) {
+            if (cobaCat(baris, kolom)) {
+                lastBaris = baris;
+                lastKolom = kolom;
+            }
+            gambar();
+        }
+    }
+
+    function mouseUp(e) {
+        if (lagiCat) {
+            lagiCat = false;
+            lastBaris = -1;
+            lastKolom = -1;
+            gambar();
+        }
+    }
+
+    function mouseLeave(e) {
+        if (lagiCat) {
+            lagiCat = false;
+            lastBaris = -1;
+            lastKolom = -1;
+            gambar();
+        }
+    }
+
+    // ----- reset total -----
+    function resetTotal() {
+        buatMaze();
+        resetCat();
+        gambar();
+        lagiCat = false;
+        lastBaris = -1;
+        lastKolom = -1;
+    }
+
+    // ----- jalan -----
+    function init() {
+        buatMaze();
+        resetCat();
+        gambar();
+        
+        canvas.addEventListener('mousedown', mouseDown);
+        canvas.addEventListener('mousemove', mouseMove);
+        canvas.addEventListener('mouseup', mouseUp);
+        canvas.addEventListener('mouseleave', mouseLeave);
+        canvas.addEventListener('dragstart', (e) => e.preventDefault());
+        
+        document.getElementById('reset').addEventListener('click', resetTotal);
+    }
+
+    init();
+</script>
+</body>
+</html>
