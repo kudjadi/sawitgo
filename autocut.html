@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AutoPotongVideo · pisah video 59 detik</title>
+  <!-- Bootstrap 5 + Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <style>
+    .video-preview-container {
+      background: #1a1e2b;
+      border-radius: 1.5rem;
+      padding: 1rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+    .video-ratio-box {
+      position: relative;
+      width: 100%;
+      background: #000;
+      border-radius: 1rem;
+      overflow: hidden;
+      aspect-ratio: 9 / 16;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+    }
+    #videoPreview {
+      max-width: 100%;
+      max-height: 100%;
+      background: black;
+      display: block;
+    }
+    .btn-soft {
+      border-radius: 40px;
+      padding: 0.6rem 2rem;
+      font-weight: 500;
+    }
+    .footer-note {
+      font-size: 0.9rem;
+      color: #adb5bd;
+    }
+    .segment-card {
+      background: #2b3035;
+      border-radius: 1rem;
+      transition: transform 0.2s;
+    }
+    .segment-card:hover {
+      transform: translateY(-2px);
+      background: #343a40;
+    }
+    .progress-bar-custom {
+      height: 4px;
+      background: #0dcaf0;
+      transition: width 0.3s;
+    }
+    .processing-status {
+      background: #212529;
+      border-radius: 1rem;
+      padding: 1rem;
+    }
+    .ffmpeg-status {
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body class="bg-dark text-white">
+
+<div class="container py-4">
+  <!-- header -->
+  <div class="d-flex align-items-center gap-3 mb-4">
+    <div class="bg-primary bg-gradient p-3 rounded-4 shadow">
+      <i class="bi bi-scissors fs-1"></i>
+    </div>
+    <div>
+      <h1 class="display-5 fw-bold mb-0">AutoPotongVideo</h1>
+      <p class="text-secondary-emphasis">otomatis potong video jadi beberapa bagian (max 59 detik per file)</p>
+    </div>
+  </div>
+
+  <!-- status ffmpeg -->
+  <div class="alert alert-info bg-transparent border-info text-info ffmpeg-status mb-3" id="ffmpegStatus">
+    <i class="bi bi-hourglass-split me-2"></i>Mempersiapkan FFmpeg...
+  </div>
+
+  <!-- card utama -->
+  <div class="card bg-black text-white border-0 shadow-lg">
+    <div class="card-body p-4 p-xl-5">
+
+      <div class="row g-4">
+        <div class="col-lg-7">
+          <div class="video-preview-container">
+            <div class="d-flex align-items-center gap-2 mb-3">
+              <i class="bi bi-crop text-info"></i>
+              <span class="fw-semibold">pratinjau video (rasio 9:16)</span>
+            </div>
+            <div class="video-ratio-box">
+              <video id="videoPreview" crossorigin="anonymous" controls></video>
+            </div>
+            <div class="d-flex justify-content-between mt-3 small text-secondary">
+              <span><i class="bi bi-arrow-left-right me-1"></i> crop otomatis tengah</span>
+              <span><i class="bi bi-hourglass-split"></i> per segmen maksimal 59 detik</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-5">
+          <!-- unggah file -->
+          <div class="mb-4">
+            <label for="videoUpload" class="form-label text-white fw-semibold"><i class="bi bi-cloud-upload me-2"></i>Pilih video panjang</label>
+            <input class="form-control form-control-lg bg-dark text-white border-secondary" type="file" id="videoUpload" accept="video/mp4,video/webm,video/quicktime">
+            <div class="form-text text-secondary">MP4, MOV, WebM — akan dipotong otomatis per 59 detik</div>
+          </div>
+
+          <!-- informasi durasi -->
+          <div class="bg-secondary bg-opacity-10 p-3 rounded-4 mb-4">
+            <div class="d-flex justify-content-between align-items-center">
+              <span>durasi sumber</span>
+              <span class="badge bg-info text-dark fs-6" id="durationDisplay">— : —</span>
+            </div>
+          </div>
+
+          <!-- info potongan -->
+          <div class="bg-secondary bg-opacity-10 p-3 rounded-4 mb-4">
+            <div class="d-flex justify-content-between align-items-center">
+              <span><i class="bi bi-pie-chart me-2"></i>jumlah segmen</span>
+              <span class="badge bg-primary rounded-pill px-3 py-2" id="segmentCount">0</span>
+            </div>
+          </div>
+
+          <!-- tombol proses -->
+          <div class="d-grid gap-3">
+            <button class="btn btn-lg btn-primary btn-soft" id="processBtn" disabled>
+              <i class="bi bi-scissors me-2"></i> potong otomatis jadi beberapa bagian
+            </button>
+          </div>
+
+          <!-- status processing -->
+          <div id="processingStatus" class="processing-status mt-4 d-none">
+            <div class="d-flex justify-content-between mb-2">
+              <span><i class="bi bi-gear me-2"></i>memproses segmen</span>
+              <span id="currentSegment">0/0</span>
+            </div>
+            <div class="progress bg-dark">
+              <div id="progressBar" class="progress-bar progress-bar-custom" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <div class="footer-note mt-4 text-center">
+            <i class="bi bi-exclamation-triangle-fill text-warning me-1"></i> pemrosesan di perangkat anda — video tidak dikirim ke server.
+          </div>
+        </div>
+      </div>
+
+      <!-- daftar hasil potongan -->
+      <div class="mt-5">
+        <h5 class="mb-3"><i class="bi bi-files me-2"></i>hasil potongan (siap download)</h5>
+        <div id="segmentsList" class="row g-3">
+          <div class="col-12 text-center text-secondary py-4">
+            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+            belum ada hasil potongan
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Gunakan versi FFmpeg yang lebih baru dan CDN yang berbeda -->
+<script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.6/dist/ffmpeg.min.js"></script>
+<script>
+  (function() {
+    const uploadEl = document.getElementById('videoUpload');
+    const videoPreview = document.getElementById('videoPreview');
+    const durationDisplay = document.getElementById('durationDisplay');
+    const processBtn = document.getElementById('processBtn');
+    const segmentsList = document.getElementById('segmentsList');
+    const segmentCount = document.getElementById('segmentCount');
+    const processingStatus = document.getElementById('processingStatus');
+    const currentSegment = document.getElementById('currentSegment');
+    const progressBar = document.getElementById('progressBar');
+    const ffmpegStatus = document.getElementById('ffmpegStatus');
+
+    let sourceFile = null;
+    let sourceDuration = 0;
+    let objectURL = null;
+    let ffmpeg = null;
+    let ffmpegLoaded = false;
+    let segments = [];
+
+    // inisialisasi ffmpeg dengan pendekatan berbeda
+    async function initFFmpeg() {
+      try {
+        ffmpegStatus.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Mengunduh dan memuat FFmpeg (mungkin butuh beberapa detik)...';
+        
+        // Gunakan pendekatan yang berbeda untuk inisialisasi
+        const { createFFmpeg, fetchFile } = FFmpegWASM;
+        
+        ffmpeg = createFFmpeg({ 
+          log: true,
+          corePath: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/ffmpeg-core.js',
+          mainName: 'main',
+          workerPath: 'https://unpkg.com/@ffmpeg/ffmpeg@0.12.6/dist/ffmpeg-worker.js'
+        });
+        
+        // Load dengan timeout
+        await Promise.race([
+          ffmpeg.load(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 30000))
+        ]);
+        
+        ffmpegLoaded = true;
+        ffmpegStatus.innerHTML = '<i class="bi bi-check-circle-fill text-success me-2"></i>FFmpeg siap digunakan';
+        ffmpegStatus.className = 'alert alert-success bg-transparent border-success text-success ffmpeg-status mb-3';
+        
+        console.log('FFmpeg berhasil dimuat');
+        
+        if (sourceDuration > 0) {
+          processBtn.disabled = false;
+        }
+      } catch (e) {
+        console.error('Gagal memuat FFmpeg:', e);
+        ffmpegStatus.innerHTML = `
+          <i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>
+          Gagal memuat FFmpeg. Mungkin koneksi lambat atau browser tidak mendukung.
+          <button class="btn btn-sm btn-outline-danger mt-2" onclick="location.reload()">
+            <i class="bi bi-arrow-clockwise me-1"></i>Coba Refresh
+          </button>
+        `;
+        ffmpegStatus.className = 'alert alert-danger bg-transparent border-danger text-danger ffmpeg-status mb-3';
+      }
+    }
+
+    // Panggil inisialisasi
+    initFFmpeg();
+
+    // ketika video dipilih
+    uploadEl.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      if (objectURL) URL.revokeObjectURL(objectURL);
+      objectURL = URL.createObjectURL(file);
+      sourceFile = file;
+
+      videoPreview.src = objectURL;
+      videoPreview.load();
+
+      videoPreview.onloadedmetadata = () => {
+        const dur = videoPreview.duration;
+        if (isFinite(dur)) {
+          sourceDuration = dur;
+          const minutes = Math.floor(dur / 60);
+          const seconds = Math.floor(dur % 60);
+          durationDisplay.innerText = `${minutes}:${seconds.toString().padStart(2,'0')}`;
+          
+          // hitung jumlah segmen
+          const numSegments = Math.ceil(dur / 59);
+          segmentCount.innerText = numSegments;
+          
+          if (ffmpegLoaded) {
+            processBtn.disabled = false;
+          }
+        }
+      };
+    });
+
+    // proses potong otomatis
+    processBtn.addEventListener('click', async function() {
+      if (!ffmpegLoaded || !sourceFile) {
+        alert('FFmpeg belum siap. Tunggu sebentar...');
+        return;
+      }
+
+      // bersihkan segments sebelumnya
+      segments = [];
+      updateSegmentsList();
+      
+      // hitung jumlah segmen
+      const numSegments = Math.ceil(sourceDuration / 59);
+      segmentCount.innerText = numSegments;
+      
+      // tampilkan status processing
+      processingStatus.classList.remove('d-none');
+      processBtn.disabled = true;
+      
+      try {
+        // baca file
+        const fileData = await fetch(objectURL).then(r => r.blob());
+        const buffer = await fileData.arrayBuffer();
+        
+        // tulis file input
+        ffmpeg.FS('writeFile', 'input.mp4', new Uint8Array(buffer));
+
+        // filter untuk crop 9:16 - versi paling sederhana
+        // kita akan resize ke 720x1280 dengan crop otomatis
+        const cropFilter = 'scale=720:1280:force_original_aspect_ratio=increase,crop=720:1280';
+        
+        // proses setiap segmen
+        for (let i = 0; i < numSegments; i++) {
+          const startTime = i * 59;
+          const duration = Math.min(59, sourceDuration - startTime);
+          
+          // update status
+          currentSegment.innerText = `${i+1}/${numSegments}`;
+          progressBar.style.width = `${((i+1)/numSegments)*100}%`;
+          
+          // proses segmen dengan parameter yang lebih sederhana
+          const outputName = `output_${i}.mp4`;
+          
+          try {
+            await ffmpeg.run(
+              '-ss', startTime.toString(),
+              '-i', 'input.mp4',
+              '-t', duration.toString(),
+              '-vf', cropFilter,
+              '-c:v', 'libx264',
+              '-preset', 'ultrafast',
+              '-crf', '30',
+              '-c:a', 'aac',
+              '-b:a', '128k',
+              '-y', outputName
+            );
+
+            // baca hasil
+            const outputData = ffmpeg.FS('readFile', outputName);
+            const blob = new Blob([outputData.buffer], { type: 'video/mp4' });
+            
+            // simpan ke array segments
+            const startMin = Math.floor(startTime / 60);
+            const startSec = Math.floor(startTime % 60);
+            
+            segments.push({
+              blob: blob,
+              index: i,
+              startTime: startTime,
+              duration: duration,
+              name: `segmen_${(i+1).toString().padStart(2,'0')}_${startMin}m${startSec.toString().padStart(2,'0')}s.mp4`
+            });
+            
+            // hapus file output dari memori
+            ffmpeg.FS('unlink', outputName);
+            
+            // update daftar segment
+            updateSegmentsList();
+          } catch (segError) {
+            console.error(`Error processing segment ${i}:`, segError);
+            // Lanjutkan ke segmen berikutnya
+          }
+        }
+        
+        // bersihkan file input
+        ffmpeg.FS('unlink', 'input.mp4');
+        
+        // sembunyikan status processing
+        processingStatus.classList.add('d-none');
+        
+        if (segments.length > 0) {
+          alert(`Berhasil memproses ${segments.length} dari ${numSegments} segmen.`);
+        } else {
+          alert('Tidak ada segmen yang berhasil diproses.');
+        }
+        
+      } catch (err) {
+        console.error('Error:', err);
+        alert('Gagal memproses video: ' + err.message);
+        processingStatus.classList.add('d-none');
+      } finally {
+        processBtn.disabled = false;
+        progressBar.style.width = '0%';
+      }
+    });
+
+    // fungsi untuk update daftar segmen
+    function updateSegmentsList() {
+      if (segments.length === 0) {
+        segmentsList.innerHTML = `
+          <div class="col-12 text-center text-secondary py-4">
+            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+            belum ada hasil potongan
+          </div>
+        `;
+        return;
+      }
+
+      let html = '';
+      segments.forEach((seg, idx) => {
+        const startMin = Math.floor(seg.startTime / 60);
+        const startSec = Math.floor(seg.startTime % 60);
+        const durSec = seg.duration.toFixed(1);
+        
+        html += `
+          <div class="col-md-6">
+            <div class="segment-card p-3">
+              <div class="d-flex align-items-center gap-3">
+                <div class="bg-primary bg-opacity-25 p-2 rounded">
+                  <i class="bi bi-film fs-4"></i>
+                </div>
+                <div class="flex-grow-1">
+                  <h6 class="mb-1">Segmen ${idx+1}</h6>
+                  <small class="text-secondary">
+                    mulai: ${startMin}:${startSec.toString().padStart(2,'0')} · durasi: ${durSec} detik
+                  </small>
+                </div>
+                <button class="btn btn-sm btn-outline-info download-single" data-index="${idx}">
+                  <i class="bi bi-download"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      // tambah tombol download semua
+      html += `
+        <div class="col-12 mt-3">
+          <button class="btn btn-success w-100 btn-soft" id="downloadAllBtn">
+            <i class="bi bi-cloud-download-fill me-2"></i>download semua segmen (${segments.length} file)
+          </button>
+        </div>
+      `;
+
+      segmentsList.innerHTML = html;
+
+      // tambah event listener untuk tombol download single
+      document.querySelectorAll('.download-single').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const index = e.currentTarget.dataset.index;
+          downloadSegment(parseInt(index));
+        });
+      });
+
+      // event listener untuk download semua
+      const downloadAllBtn = document.getElementById('downloadAllBtn');
+      if (downloadAllBtn) {
+        downloadAllBtn.addEventListener('click', downloadAllSegments);
+      }
+    }
+
+    // fungsi download single segment
+    function downloadSegment(index) {
+      const seg = segments[index];
+      if (!seg) return;
+      
+      const url = URL.createObjectURL(seg.blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = seg.name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // fungsi download semua segments
+    function downloadAllSegments() {
+      if (segments.length === 0) return;
+      
+      for (let i = 0; i < segments.length; i++) {
+        setTimeout(() => {
+          downloadSegment(i);
+        }, i * 300);
+      }
+    }
+
+    // bersihkan objectURL
+    window.addEventListener('beforeunload', () => {
+      if (objectURL) URL.revokeObjectURL(objectURL);
+    });
+
+  })();
+</script>
+</body>
+</html>
