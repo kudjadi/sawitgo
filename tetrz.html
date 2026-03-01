@@ -3,499 +3,329 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>tetris · kontrol kiri kanan</title>
-    <!-- Tailwind via CDN (ringan) -->
+    <title>tetris · satu kolom · mobile</title>
+    <!-- tailwind + font -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Font Inter untuk UX lebih enak -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap" rel="stylesheet">
     <style>
-        * { font-family: 'Inter', system-ui, sans-serif; }
-        /* canvas tetap tajam (pixelated) */
-        canvas { 
-            image-rendering: pixelated; 
-            image-rendering: crisp-edges; 
-            display: block;
-            width: 100%;
-            height: auto;
-            max-width: 300px;
-            border-radius: 20px;
-            box-shadow: 0 20px 30px -10px rgba(0,0,0,0.6);
-        }
-        /* tombol dengan efek tekan ala gameboy */
-        .btn-tetris {
-            transition: all 0.06s ease-out;
-            box-shadow: 0 5px 0 rgba(0, 0, 0, 0.4);
-            transform: translateY(0);
-            font-weight: 700;
-            border: 1px solid rgba(255,255,255,0.15);
-        }
-        .btn-tetris:active {
-            transform: translateY(5px);
-            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
-        }
-        /* panel kiri/kanan konsisten */
-        .control-panel {
-            background: rgba(15, 20, 30, 0.7);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 32px;
-            box-shadow: 0 20px 30px -12px black;
-        }
-        /* score & next di atas */
-        .top-panel {
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 215, 100, 0.2);
-            border-radius: 48px;
-            box-shadow: 0 10px 20px -5px #00000080;
-        }
-        .next-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 4px;
-            background: #1e1e2f;
-            padding: 8px;
-            border-radius: 18px;
-        }
-        .next-cell {
-            aspect-ratio: 1 / 1;
-            background: #2d334f;
-            border-radius: 6px;
-            box-shadow: inset 0 -2px 0 #0b0e1a;
-        }
-        .next-cell.filled {
-            background: #f0c45a;
-            box-shadow: inset 0 -2px 0 #a05f2c, 0 0 0 1px #ffec9e;
-        }
-        /* mobile friendly: kolom fleksibel */
-        @media (max-width: 640px) {
-            .btn-tetris {
-                font-size: 1.2rem;
-                padding: 12px 0;
-            }
-            .top-panel {
-                border-radius: 32px;
-            }
-        }
+        * { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        canvas { image-rendering: crisp-edges; image-rendering: pixelated; width: 100%; height: auto; display: block; }
+        .btn-game { transition: all 0.06s ease; box-shadow: 0 5px 0 rgba(0,0,0,0.4); touch-action: manipulation; user-select: none; }
+        .btn-game:active { transform: translateY(4px); box-shadow: 0 1px 0 rgba(0,0,0,0.4); }
+        /* next grid sederhana */
+        .next-mini-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; aspect-ratio: 1/1; width: 70px; }
+        .next-block { background-color: #334155; border-radius: 6px; }
     </style>
 </head>
-<body class="bg-gradient-to-b from-slate-900 via-indigo-950 to-purple-950 min-h-screen flex items-center justify-center p-2 md:p-3">
+<body class="bg-gradient-to-b from-slate-950 to-indigo-950 min-h-dvh flex items-center justify-center p-2">
 
-    <!-- container utama VERTICAL: atas (score+next) + bawah (kiri|kanvas|kanan) -->
-    <div class="flex flex-col items-center justify-center w-full max-w-3xl gap-3">
+<div class="w-full max-w-2xl flex flex-col items-center gap-2">
 
-        <!-- PANEL ATAS: skor & next piece (digabung proporsional) -->
-        <div class="top-panel w-full flex items-center justify-between px-5 md:px-8 py-3 text-white">
-            <!-- skor kiri -->
-            <div class="flex items-center gap-4">
-                <div class="text-left">
-                    <div class="text-xs uppercase tracking-wider text-amber-300/80 font-semibold">Skor</div>
-                    <div class="text-3xl md:text-4xl font-black text-amber-300 drop-shadow-lg" id="scoreDisplay">0</div>
-                </div>
-                <div class="h-8 w-px bg-white/20 mx-1"></div>
-                <div class="text-left">
-                    <div class="text-xs uppercase tracking-wider text-emerald-300/80">Baris</div>
-                    <div class="text-2xl md:text-3xl font-bold text-emerald-300" id="linesDisplay">0</div>
-                </div>
-            </div>
-            <!-- next piece + label -->
-            <div class="flex items-center gap-3">
-                <span class="text-white/60 text-sm font-medium hidden sm:block">next</span>
-                <div class="next-grid w-16 sm:w-20" id="nextPieceContainer">
-                    <!-- diisi lewat js nanti (mini preview 4x4) -->
-                    <div class="next-cell"></div><div class="next-cell"></div><div class="next-cell"></div><div class="next-cell"></div>
-                    <div class="next-cell"></div><div class="next-cell"></div><div class="next-cell"></div><div class="next-cell"></div>
-                    <div class="next-cell"></div><div class="next-cell"></div><div class="next-cell"></div><div class="next-cell"></div>
-                    <div class="next-cell"></div><div class="next-cell"></div><div class="next-cell"></div><div class="next-cell"></div>
-                </div>
+    <!-- HEADER: skor, next, baris (UX simpel) -->
+    <div class="w-full flex items-center justify-between bg-white/5 backdrop-blur-sm p-3 rounded-2xl border border-white/10 text-white shadow-xl">
+        <div class="flex items-center gap-2">
+            <div class="w-2 h-8 bg-lime-400 rounded-full"></div>
+            <div>
+                <div class="text-xs text-white/40">SKOR</div>
+                <div id="scoreDisplay" class="text-3xl font-black text-lime-300 leading-none">0</div>
             </div>
         </div>
-
-        <!-- BARIS KEDUA: kontrol kiri | kanvas | kontrol kanan (flex row) -->
-        <div class="flex flex-row items-stretch justify-center gap-2 md:gap-3 w-full">
-
-            <!-- KIRI: panel arah kiri, rotate, reset, dash (vertikal) -->
-            <div class="control-panel w-24 md:w-28 flex flex-col justify-between p-3 md:p-4">
-                <div class="space-y-2">
-                    <!-- tombol arah kiri (besar) -->
-                    <button id="moveLeftBtn" class="btn-tetris w-full bg-indigo-500 hover:bg-indigo-400 text-white text-3xl py-4 rounded-2xl border-b-4 border-indigo-800 flex items-center justify-center">←</button>
-                    <!-- rotate kiri (↺) dan reset (↻) berpasangan -->
-                    <div class="grid grid-cols-2 gap-2">
-                        <button id="rotateLeftBtn" class="btn-tetris bg-amber-500 hover:bg-amber-400 text-white text-2xl py-3 rounded-xl border-b-4 border-amber-800">↺</button>
-                        <button id="resetGameBtn" class="btn-tetris bg-red-600/90 hover:bg-red-500 text-white text-2xl py-3 rounded-xl border-b-4 border-red-900">↻</button>
-                    </div>
-                </div>
-                <!-- dash (hard drop) di bawah -->
-                <button id="hardDropBtnLeft" class="btn-tetris w-full mt-3 bg-purple-600 hover:bg-purple-500 text-white text-xl py-4 rounded-2xl border-b-4 border-purple-900 font-bold">⬇️⤓</button>
-                <span class="text-white/30 text-[10px] text-center mt-1">kiri</span>
-            </div>
-
-            <!-- TENGAH: kanvas game (responsif) -->
-            <div class="flex items-center">
-                <canvas id="tetrisCanvas" width="300" height="600" class="w-full h-auto max-w-[240px] sm:max-w-[280px] md:max-w-[300px] shadow-2xl"></canvas>
-            </div>
-
-            <!-- KANAN: panel arah kanan, rotate kanan, pause, dash -->
-            <div class="control-panel w-24 md:w-28 flex flex-col justify-between p-3 md:p-4">
-                <div class="space-y-2">
-                    <!-- tombol arah kanan (besar) -->
-                    <button id="moveRightBtn" class="btn-tetris w-full bg-indigo-500 hover:bg-indigo-400 text-white text-3xl py-4 rounded-2xl border-b-4 border-indigo-800 flex items-center justify-center">→</button>
-                    <!-- rotate kanan (↻) dan pause (⏸) -->
-                    <div class="grid grid-cols-2 gap-2">
-                        <button id="rotateRightBtn" class="btn-tetris bg-amber-500 hover:bg-amber-400 text-white text-2xl py-3 rounded-xl border-b-4 border-amber-800">↻</button>
-                        <button id="pauseToggleBtn" class="btn-tetris bg-cyan-600/90 hover:bg-cyan-500 text-white text-2xl py-3 rounded-xl border-b-4 border-cyan-800">⏸</button>
-                    </div>
-                </div>
-                <!-- dash kanan (hard drop) -->
-                <button id="hardDropBtnRight" class="btn-tetris w-full mt-3 bg-purple-600 hover:bg-purple-500 text-white text-xl py-4 rounded-2xl border-b-4 border-purple-900 font-bold">⬇️⤓</button>
-                <span class="text-white/30 text-[10px] text-center mt-1">kanan</span>
+        <div class="flex items-center gap-2">
+            <span class="text-white/40 text-sm">next</span>
+            <div id="nextPieceContainer" class="next-mini-grid bg-black/40 p-2 rounded-xl">
+                <!-- diisi js -->
+                <div class="next-block"></div><div class="next-block"></div><div class="next-block"></div><div class="next-block"></div>
+                <div class="next-block"></div><div class="next-block"></div><div class="next-block"></div><div class="next-block"></div>
+                <div class="next-block"></div><div class="next-block"></div><div class="next-block"></div><div class="next-block"></div>
+                <div class="next-block"></div><div class="next-block"></div><div class="next-block"></div><div class="next-block"></div>
             </div>
         </div>
-
-        <!-- status kecil untuk mobile (spacer) -->
-        <div class="text-white/40 text-xs flex justify-between w-full px-2">
-            <span>🕹️ <span id="gameState" class="text-lime-300 font-medium">main</span></span>
-            <span>⚡ spasi hard drop</span>
+        <div class="text-right">
+            <div class="text-xs text-white/40">BARIS</div>
+            <div id="linesDisplay" class="text-2xl font-mono text-cyan-300">0</div>
         </div>
     </div>
 
-    <script>
-        (function() {
-            // -------------------- TETRIS CORE --------------------
-            const canvas = document.getElementById('tetrisCanvas');
-            const ctx = canvas.getContext('2d');
-            const scoreSpan = document.getElementById('scoreDisplay');
-            const linesSpan = document.getElementById('linesDisplay');
-            const gameStateSpan = document.getElementById('gameState');
+    <!-- BARIS UTAMA: KIRI (1 kolom) + CANVAS + KANAN (1 kolom) -->
+    <div class="w-full flex flex-row items-stretch gap-2">
 
-            const COLS = 10;
-            const ROWS = 20;
-            const BLOCK_SIZE = canvas.width / COLS; // 30px
+        <!-- PANEL KIRI: satu kolom vertikal (dash + rotate + panah) -->
+        <div class="w-20 md:w-28 flex flex-col justify-end gap-2 bg-white/5 backdrop-blur-sm p-2 rounded-2xl border border-white/10">
+            <!-- dash (strip kecil) sebagai pemisah visual -->
+            <div class="text-white/20 text-3xl text-center leading-none -mt-1">—</div>
+            <!-- rotate kiri + kanan? tapi permintaan 1 kolom, kita satukan jadi dua tombol rotate dan satu panah? kita taruh rotate kanan & kiri + panah kiri saja? tapi harus fungsional, kita tempatkan rotate kiri, rotate kanan, lalu panah kiri, dan hard drop (karena hard drop penting) dalam satu kolom. -->
+            <button id="rotateLeftBtn" class="btn-game bg-amber-500/90 active:bg-amber-400 text-3xl py-2 rounded-xl border-b-4 border-amber-800 text-white">↺</button>
+            <button id="rotateRightBtn" class="btn-game bg-amber-500/90 active:bg-amber-400 text-3xl py-2 rounded-xl border-b-4 border-amber-800 text-white">↻</button>
+            <button id="moveLeftBtn" class="btn-game bg-sky-500/90 active:bg-sky-400 text-3xl py-2 rounded-xl border-b-4 border-sky-800 text-white">←</button>
+            <button id="hardDropBtn" class="btn-game bg-purple-500/90 active:bg-purple-400 text-xl py-2 rounded-xl border-b-4 border-purple-800 text-white">⬇️⤓</button>
+            <!-- jeda kecil -->
+            <button id="pauseToggleBtn" class="text-xs bg-gray-600/60 active:bg-gray-500 py-2 rounded-lg border-b-4 border-gray-700 text-white/90 mt-1">⏸️</button>
+        </div>
 
-            let board = Array(ROWS).fill().map(() => Array(COLS).fill(0));
-            let score = 0;
-            let lines = 0;
-            let gameActive = true;
-            let paused = false;
+        <!-- CANVAS GAME -->
+        <div class="flex-shrink-0 bg-gray-900 p-2 rounded-3xl border border-white/20 shadow-2xl">
+            <canvas id="tetrisCanvas" width="300" height="600" class="block rounded-lg w-[160px] md:w-[260px] h-auto"></canvas>
+        </div>
 
-            // piece definitions + warna
-            const PIECES = [
-                { // I
-                    shape: [[1,1,1,1]],
-                    color: '#2ad4e3' 
-                },
-                { // O
-                    shape: [[1,1],[1,1]],
-                    color: '#f7e476' 
-                },
-                { // T
-                    shape: [[0,1,0],[1,1,1]],
-                    color: '#b784e0' 
-                },
-                { // S
-                    shape: [[0,1,1],[1,1,0]],
-                    color: '#6fcf97' 
-                },
-                { // Z
-                    shape: [[1,1,0],[0,1,1]],
-                    color: '#e66767' 
-                },
-                { // L
-                    shape: [[1,0,0],[1,1,1]],
-                    color: '#f0a55a' 
-                },
-                { // J
-                    shape: [[0,0,1],[1,1,1]],
-                    color: '#5a9cf0' 
-                }
-            ];
+        <!-- PANEL KANAN: satu kolom vertikal (dash + rotate + arah kanan) -->
+        <div class="w-20 md:w-28 flex flex-col justify-end gap-2 bg-white/5 backdrop-blur-sm p-2 rounded-2xl border border-white/10">
+            <div class="text-white/20 text-3xl text-center leading-none -mt-1">—</div>
+            <button id="rotateLeftBtn2" class="btn-game bg-amber-500/90 active:bg-amber-400 text-3xl py-2 rounded-xl border-b-4 border-amber-800 text-white">↺</button>
+            <button id="rotateRightBtn2" class="btn-game bg-amber-500/90 active:bg-amber-400 text-3xl py-2 rounded-xl border-b-4 border-amber-800 text-white">↻</button>
+            <button id="moveRightBtn" class="btn-game bg-sky-500/90 active:bg-sky-400 text-3xl py-2 rounded-xl border-b-4 border-sky-800 text-white">→</button>
+            <button id="hardDropBtn2" class="btn-game bg-purple-500/90 active:bg-purple-400 text-xl py-2 rounded-xl border-b-4 border-purple-800 text-white">⬇️⤓</button>
+            <button id="resetGameBtn" class="text-xs bg-red-800/60 active:bg-red-700 py-2 rounded-lg border-b-4 border-red-950 text-white/90 mt-1">⟲</button>
+        </div>
+    </div>
 
-            let currentPiece = null;
-            let nextPiece = null;
+    <!-- hint kecil (mobile friendly) -->
+    <div class="text-white/30 text-[11px] flex gap-3 mt-1">
+        <span>← → panah · spasi hard drop · P jeda</span>
+    </div>
+</div>
 
-            // helper random
-            function randomPiece() {
-                const idx = Math.floor(Math.random() * PIECES.length);
-                return { 
-                    shape: PIECES[idx].shape.map(row => [...row]), 
-                    color: PIECES[idx].color 
-                };
-            }
+<script>
+    (function() {
+        // --- elemen DOM
+        const canvas = document.getElementById('tetrisCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreSpan = document.getElementById('scoreDisplay');
+        const linesSpan = document.getElementById('linesDisplay');
+        const nextContainer = document.getElementById('nextPieceContainer');
 
-            // preview next (update kotak next)
-            function updateNextPreview() {
-                const container = document.getElementById('nextPieceContainer');
-                if (!container || !nextPiece) return;
-                const cells = container.querySelectorAll('.next-cell');
-                // reset semua
-                cells.forEach(cell => {
-                    cell.classList.remove('filled');
-                    cell.style.background = '#2d334f';
-                });
-                // gambarkan shape di grid 4x4
-                const shape = nextPiece.shape;
-                for (let r = 0; r < shape.length; r++) {
-                    for (let c = 0; c < shape[0].length; c++) {
-                        if (shape[r][c]) {
-                            const idx = r * 4 + c;
-                            if (idx < cells.length) {
-                                cells[idx].classList.add('filled');
-                                cells[idx].style.background = nextPiece.color;
-                            }
-                        }
-                    }
-                }
-            }
+        // konstanta
+        const COLS = 10, ROWS = 20;
+        const BLOCK_SIZE = canvas.width / COLS; // 30px
 
-            // spawn piece baru
-            function spawnNewPiece() {
-                if (!nextPiece) {
-                    nextPiece = randomPiece();
-                }
-                currentPiece = {
-                    shape: nextPiece.shape.map(row => [...row]),
-                    color: nextPiece.color,
-                    x: Math.floor((COLS - nextPiece.shape[0].length) / 2),
-                    y: 0
-                };
-                nextPiece = randomPiece();
-                updateNextPreview();
+        // state
+        let board = Array(ROWS).fill().map(() => Array(COLS).fill(0));
+        let score = 0, lines = 0;
+        let gameActive = true, paused = false;
 
-                if (collision(currentPiece.shape, currentPiece.x, currentPiece.y)) {
-                    gameActive = false;
-                    gameStateSpan.innerText = 'game over';
-                }
-            }
+        // piece library
+        const PIECES = [
+            { shape: [[1,1,1,1]], color: '#2ad4e3' },        // I
+            { shape: [[1,1],[1,1]], color: '#f7e476' },      // O
+            { shape: [[0,1,0],[1,1,1]], color: '#b784e0' },  // T
+            { shape: [[0,1,1],[1,1,0]], color: '#6fcf97' },  // S
+            { shape: [[1,1,0],[0,1,1]], color: '#e66767' },  // Z
+            { shape: [[1,0,0],[1,1,1]], color: '#f0a55a' },  // L
+            { shape: [[0,0,1],[1,1,1]], color: '#5a9cf0' }   // J
+        ];
 
-            // collision
-            function collision(shape, offX, offY) {
-                for (let r = 0; r < shape.length; r++) {
-                    for (let c = 0; c < shape[0].length; c++) {
-                        if (shape[r][c] !== 0) {
-                            const boardX = offX + c;
-                            const boardY = offY + r;
-                            if (boardX < 0 || boardX >= COLS || boardY >= ROWS || boardY < 0) return true;
-                            if (boardY >= 0 && board[boardY][boardX] !== 0) return true;
-                        }
-                    }
-                }
-                return false;
-            }
+        let currentPiece = null;
+        let nextPiece = null;
 
-            // lock & clear rows
-            function lockPiece() {
-                if (!currentPiece) return;
-                for (let r = 0; r < currentPiece.shape.length; r++) {
-                    for (let c = 0; c < currentPiece.shape[0].length; c++) {
-                        if (currentPiece.shape[r][c] !== 0) {
-                            const boardX = currentPiece.x + c;
-                            const boardY = currentPiece.y + r;
-                            if (boardY >= 0 && boardY < ROWS && boardX >= 0 && boardX < COLS) {
-                                board[boardY][boardX] = currentPiece.color;
-                            }
-                        }
-                    }
-                }
-                clearFullRows();
-                if (gameActive && !paused) spawnNewPiece();
-            }
+        function randomPiece() {
+            const idx = Math.floor(Math.random() * PIECES.length);
+            return { 
+                ...PIECES[idx], 
+                shape: PIECES[idx].shape.map(row => [...row]) 
+            };
+        }
 
-            function clearFullRows() {
-                let rowsCleared = 0;
-                for (let row = ROWS - 1; row >= 0;) {
-                    if (board[row].every(cell => cell !== 0)) {
-                        for (let r = row; r > 0; r--) board[r] = [...board[r-1]];
-                        board[0] = Array(COLS).fill(0);
-                        rowsCleared++;
+        // update tampilan next (grid 4x4)
+        function updateNextDisplay() {
+            if (!nextPiece) return;
+            nextContainer.innerHTML = '';
+            const shape = nextPiece.shape;
+            for (let r = 0; r < 4; r++) {
+                for (let c = 0; c < 4; c++) {
+                    const block = document.createElement('div');
+                    block.className = 'next-block';
+                    if (r < shape.length && c < shape[0].length && shape[r][c] !== 0) {
+                        block.style.backgroundColor = nextPiece.color;
+                        block.style.boxShadow = 'inset 0 0 0 1px rgba(255,255,255,0.3)';
                     } else {
-                        row--;
+                        block.style.backgroundColor = '#1e293b';
                     }
-                }
-                if (rowsCleared > 0) {
-                    lines += rowsCleared;
-                    score += rowsCleared === 1 ? 100 : rowsCleared === 2 ? 300 : rowsCleared === 3 ? 600 : 1000;
-                    linesSpan.innerText = lines;
-                    scoreSpan.innerText = score;
+                    nextContainer.appendChild(block);
                 }
             }
+        }
 
-            // gerakan dasar
-            function moveDown() {
-                if (!gameActive || paused || !currentPiece) return false;
-                if (!collision(currentPiece.shape, currentPiece.x, currentPiece.y + 1)) {
-                    currentPiece.y++;
-                    return true;
-                } else {
-                    lockPiece();
-                    return false;
-                }
-            }
-            function moveLeft() {
-                if (!gameActive || paused || !currentPiece) return;
-                if (!collision(currentPiece.shape, currentPiece.x - 1, currentPiece.y)) currentPiece.x--;
-            }
-            function moveRight() {
-                if (!gameActive || paused || !currentPiece) return;
-                if (!collision(currentPiece.shape, currentPiece.x + 1, currentPiece.y)) currentPiece.x++;
-            }
-
-            // rotasi
-            function rotatePiece(direction = 'right') {
-                if (!gameActive || paused || !currentPiece) return;
-                let rotated;
-                if (direction === 'right') {
-                    rotated = currentPiece.shape[0].map((_, idx) => currentPiece.shape.map(row => row[idx]).reverse());
-                } else {
-                    // left = 3x right
-                    let temp = currentPiece.shape[0].map((_, idx) => currentPiece.shape.map(row => row[idx]).reverse());
-                    for (let i=0; i<2; i++) temp = temp[0].map((_, idx) => temp.map(row => row[idx]).reverse());
-                    rotated = temp;
-                }
-                if (!collision(rotated, currentPiece.x, currentPiece.y)) {
-                    currentPiece.shape = rotated;
-                } else { // wallkick simple geser 1
-                    if (!collision(rotated, currentPiece.x - 1, currentPiece.y)) {
-                        currentPiece.shape = rotated;
-                        currentPiece.x--;
-                    } else if (!collision(rotated, currentPiece.x + 1, currentPiece.y)) {
-                        currentPiece.shape = rotated;
-                        currentPiece.x++;
+        // collision
+        function collision(shape, offX, offY) {
+            for (let r = 0; r < shape.length; r++) {
+                for (let c = 0; c < shape[0].length; c++) {
+                    if (shape[r][c] !== 0) {
+                        const boardX = offX + c;
+                        const boardY = offY + r;
+                        if (boardX < 0 || boardX >= COLS || boardY >= ROWS || boardY < 0) return true;
+                        if (boardY >= 0 && board[boardY][boardX] !== 0) return true;
                     }
                 }
             }
+            return false;
+        }
 
-            function hardDrop() {
-                if (!gameActive || paused || !currentPiece) return;
-                while (!collision(currentPiece.shape, currentPiece.x, currentPiece.y + 1)) currentPiece.y++;
-                lockPiece();
-            }
-
-            function resetGame() {
-                board = Array(ROWS).fill().map(() => Array(COLS).fill(0));
-                score = 0; lines = 0;
-                gameActive = true; paused = false;
-                gameStateSpan.innerText = 'main';
-                scoreSpan.innerText = '0';
-                linesSpan.innerText = '0';
-                nextPiece = randomPiece();
-                updateNextPreview();
-                spawnNewPiece();
-            }
-
-            // pause toggle
-            function togglePause() {
-                if (!gameActive) return;
-                paused = !paused;
-                gameStateSpan.innerText = paused ? 'pause' : 'main';
-            }
-
-            // render
-            function draw() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#0f1322';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                // board
-                for (let row = 0; row < ROWS; row++) {
-                    for (let col = 0; col < COLS; col++) {
-                        if (board[row][col] !== 0) {
-                            ctx.fillStyle = board[row][col];
-                            ctx.fillRect(col * BLOCK_SIZE, row * BLOCK_SIZE, BLOCK_SIZE-1, BLOCK_SIZE-1);
-                            ctx.fillStyle = 'rgba(255,255,255,0.15)';
-                            ctx.fillRect(col * BLOCK_SIZE+2, row * BLOCK_SIZE+2, BLOCK_SIZE-6, BLOCK_SIZE-6);
-                        } else {
-                            ctx.fillStyle = '#262d44';
-                            ctx.fillRect(col * BLOCK_SIZE, row * BLOCK_SIZE, BLOCK_SIZE-1, BLOCK_SIZE-1);
+        function lockPiece() {
+            if (!currentPiece) return;
+            for (let r = 0; r < currentPiece.shape.length; r++) {
+                for (let c = 0; c < currentPiece.shape[0].length; c++) {
+                    if (currentPiece.shape[r][c] !== 0) {
+                        const boardX = currentPiece.x + c;
+                        const boardY = currentPiece.y + r;
+                        if (boardY >= 0 && boardY < ROWS && boardX >= 0 && boardX < COLS) {
+                            board[boardY][boardX] = currentPiece.color;
                         }
                     }
                 }
-                if (currentPiece && gameActive) {
-                    for (let r = 0; r < currentPiece.shape.length; r++) {
-                        for (let c = 0; c < currentPiece.shape[0].length; c++) {
-                            if (currentPiece.shape[r][c]) {
-                                const x = (currentPiece.x + c) * BLOCK_SIZE;
-                                const y = (currentPiece.y + r) * BLOCK_SIZE;
-                                ctx.fillStyle = currentPiece.color;
-                                ctx.fillRect(x, y, BLOCK_SIZE-1, BLOCK_SIZE-1);
-                                ctx.fillStyle = 'rgba(255,255,255,0.35)';
-                                ctx.fillRect(x+3, y+3, BLOCK_SIZE-8, BLOCK_SIZE-8);
-                            }
-                        }
-                    }
-                }
-                // grid halus
-                ctx.strokeStyle = '#3a405b';
-                ctx.lineWidth = 0.6;
-                for (let i=0;i<=COLS;i++) {
-                    ctx.beginPath();
-                    ctx.moveTo(i*BLOCK_SIZE,0); ctx.lineTo(i*BLOCK_SIZE,canvas.height);
-                    ctx.stroke();
-                }
-                for (let i=0;i<=ROWS;i++) {
-                    ctx.beginPath();
-                    ctx.moveTo(0,i*BLOCK_SIZE); ctx.lineTo(canvas.width,i*BLOCK_SIZE);
-                    ctx.stroke();
-                }
             }
+            clearFullRows();
+            if (gameActive && !paused) spawnNewPiece();
+        }
 
-            // loop gravitasi
-            let lastTick = 0;
-            const TICK_INTERVAL = 430;
-            function loop(now) {
-                if (!lastTick || now - lastTick >= TICK_INTERVAL) {
-                    lastTick = now;
-                    if (gameActive && !paused) moveDown();
-                }
-                draw();
-                requestAnimationFrame(loop);
+        function clearFullRows() {
+            let rowsCleared = 0;
+            for (let row = ROWS - 1; row >= 0; ) {
+                if (board[row].every(cell => cell !== 0)) {
+                    for (let r = row; r > 0; r--) board[r] = [...board[r-1]];
+                    board[0] = Array(COLS).fill(0);
+                    rowsCleared++;
+                } else row--;
             }
-            requestAnimationFrame(loop);
+            if (rowsCleared > 0) {
+                lines += rowsCleared;
+                if (rowsCleared === 1) score += 100;
+                else if (rowsCleared === 2) score += 300;
+                else if (rowsCleared === 3) score += 600;
+                else if (rowsCleared >= 4) score += 1000;
+                linesSpan.innerText = lines;
+                scoreSpan.innerText = score;
+            }
+        }
 
-            // inisialisasi
+        function spawnNewPiece() {
+            if (!nextPiece) nextPiece = randomPiece();
+            currentPiece = {
+                shape: nextPiece.shape.map(row => [...row]),
+                color: nextPiece.color,
+                x: Math.floor((COLS - nextPiece.shape[0].length) / 2),
+                y: 0
+            };
             nextPiece = randomPiece();
-            updateNextPreview();
-            spawnNewPiece();
+            updateNextDisplay();
 
-            // ---- PENGGABUNGAN EVENT (kiri & kanan) ----
-            const moveLeftBtns = ['moveLeftBtn'];
-            const moveRightBtns = ['moveRightBtn'];
-            const rotateLeftBtns = ['rotateLeftBtn'];
-            const rotateRightBtns = ['rotateRightBtn'];
-            const hardDropBtns = ['hardDropBtnLeft', 'hardDropBtnRight'];
-            const resetBtns = ['resetGameBtn'];
-            const pauseBtns = ['pauseToggleBtn'];
-
-            function addClick(ids, fn) {
-                ids.forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) el.addEventListener('click', (e) => { e.preventDefault(); fn(); });
-                });
+            if (collision(currentPiece.shape, currentPiece.x, currentPiece.y)) {
+                gameActive = false;
             }
+        }
 
-            addClick(moveLeftBtns, moveLeft);
-            addClick(moveRightBtns, moveRight);
-            addClick(rotateLeftBtns, () => rotatePiece('left'));
-            addClick(rotateRightBtns, () => rotatePiece('right'));
-            addClick(hardDropBtns, hardDrop);
-            addClick(resetBtns, resetGame);
-            addClick(pauseBtns, togglePause);
+        // gerakan
+        function moveDown() {
+            if (!gameActive || paused || !currentPiece) return false;
+            if (!collision(currentPiece.shape, currentPiece.x, currentPiece.y + 1)) {
+                currentPiece.y++; return true;
+            } else { lockPiece(); return false; }
+        }
+        function moveLeft() { if (gameActive && !paused && currentPiece && !collision(currentPiece.shape, currentPiece.x-1, currentPiece.y)) currentPiece.x--; }
+        function moveRight() { if (gameActive && !paused && currentPiece && !collision(currentPiece.shape, currentPiece.x+1, currentPiece.y)) currentPiece.x++; }
+        function rotatePiece(direction = 'right') {
+            if (!gameActive || paused || !currentPiece) return;
+            let rotated;
+            if (direction === 'right') {
+                rotated = currentPiece.shape[0].map((_, idx) => currentPiece.shape.map(row => row[idx]).reverse());
+            } else {
+                // left = 3x right
+                rotated = currentPiece.shape[0].map((_, idx) => currentPiece.shape.map(row => row[idx]).reverse());
+                for (let i=0; i<2; i++) rotated = rotated[0].map((_, idx) => rotated.map(row => row[idx]).reverse());
+            }
+            if (!collision(rotated, currentPiece.x, currentPiece.y)) {
+                currentPiece.shape = rotated;
+            } else {
+                if (!collision(rotated, currentPiece.x-1, currentPiece.y)) { currentPiece.shape = rotated; currentPiece.x--; }
+                else if (!collision(rotated, currentPiece.x+1, currentPiece.y)) { currentPiece.shape = rotated; currentPiece.x++; }
+            }
+        }
+        function hardDrop() {
+            if (!gameActive || paused || !currentPiece) return;
+            while (!collision(currentPiece.shape, currentPiece.x, currentPiece.y + 1)) currentPiece.y++;
+            lockPiece();
+        }
 
-            // keyboard
-            window.addEventListener('keydown', (e) => {
-                const key = e.key;
-                if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(key)) {
-                    e.preventDefault();
+        function resetGame() {
+            board = Array(ROWS).fill().map(() => Array(COLS).fill(0));
+            score = 0; lines = 0; gameActive = true; paused = false;
+            scoreSpan.innerText = '0'; linesSpan.innerText = '0';
+            nextPiece = randomPiece(); updateNextDisplay();
+            spawnNewPiece();
+        }
+
+        // gambar
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
+                    if (board[row][col] !== 0) {
+                        ctx.fillStyle = board[row][col];
+                        ctx.fillRect(col*BLOCK_SIZE, row*BLOCK_SIZE, BLOCK_SIZE-1, BLOCK_SIZE-1);
+                        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+                        ctx.fillRect(col*BLOCK_SIZE+3, row*BLOCK_SIZE+3, BLOCK_SIZE-7, BLOCK_SIZE-7);
+                    } else {
+                        ctx.fillStyle = '#1e293b';
+                        ctx.fillRect(col*BLOCK_SIZE, row*BLOCK_SIZE, BLOCK_SIZE-1, BLOCK_SIZE-1);
+                    }
                 }
-                if (!gameActive) return;
-                if (key === 'ArrowLeft') moveLeft();
-                else if (key === 'ArrowRight') moveRight();
-                else if (key === 'ArrowDown') moveDown();
-                else if (key === 'ArrowUp') rotatePiece('right');
-                else if (key === ' ' || key === 'Space') hardDrop();
-                else if (key === 'p' || key === 'P') togglePause();
-            });
-        })();
-    </script>
+            }
+            if (currentPiece && gameActive) {
+                for (let r=0; r<currentPiece.shape.length; r++) {
+                    for (let c=0; c<currentPiece.shape[0].length; c++) {
+                        if (currentPiece.shape[r][c]) {
+                            const x = (currentPiece.x + c) * BLOCK_SIZE;
+                            const y = (currentPiece.y + r) * BLOCK_SIZE;
+                            ctx.fillStyle = currentPiece.color;
+                            ctx.fillRect(x, y, BLOCK_SIZE-1, BLOCK_SIZE-1);
+                            ctx.fillStyle = 'rgba(255,255,255,0.3)';
+                            ctx.fillRect(x+4, y+4, BLOCK_SIZE-9, BLOCK_SIZE-9);
+                        }
+                    }
+                }
+            }
+            requestAnimationFrame(draw);
+        }
+        draw();
+
+        // gravity loop
+        setInterval(() => { if (gameActive && !paused) moveDown(); }, 430);
+
+        // inisialisasi
+        nextPiece = randomPiece(); updateNextDisplay();
+        spawnNewPiece();
+
+        // MAP TOMBOL (setiap ID ke fungsi, kolom kiri & kanan terpisah tapi fungsinya sama)
+        const actions = [
+            ['moveLeftBtn', moveLeft], ['moveLeftBtn2', moveLeft],
+            ['moveRightBtn', moveRight], ['moveRightBtn2', moveRight],
+            ['rotateLeftBtn', ()=>rotatePiece('left')], ['rotateLeftBtn2', ()=>rotatePiece('left')],
+            ['rotateRightBtn', ()=>rotatePiece('right')], ['rotateRightBtn2', ()=>rotatePiece('right')],
+            ['hardDropBtn', hardDrop], ['hardDropBtn2', hardDrop],
+            ['pauseToggleBtn', ()=>{ if(gameActive) paused = !paused; }],
+            ['resetGameBtn', resetGame]
+        ];
+        actions.forEach(([id, fn]) => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('click', (e) => { e.preventDefault(); fn(); });
+        });
+
+        // keyboard
+        window.addEventListener('keydown', (e) => {
+            const key = e.key;
+            if (!gameActive) return;
+            e.preventDefault();
+            if (key === 'ArrowLeft') moveLeft();
+            else if (key === 'ArrowRight') moveRight();
+            else if (key === 'ArrowDown') moveDown();
+            else if (key === 'ArrowUp') rotatePiece('right');
+            else if (key === ' ' || key === 'Space') hardDrop();
+            else if (key === 'p' || key === 'P') paused = !paused;
+        });
+        window.addEventListener('keydown', (e) => {
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) e.preventDefault();
+        }, {passive: false});
+    })();
+</script>
 </body>
 </html>
