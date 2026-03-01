@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>tetris · full mobile · responsif</title>
+    <title>tetris · animasi blok + auto reset</title>
     <!-- tailwind + font inter -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap" rel="stylesheet">
@@ -21,7 +21,25 @@
             justify-content: center;
             padding: 8px;
             margin: 0;
+            transition: background 0.3s ease;
         }
+        body.theme-light {
+            background: radial-gradient(circle at top, #f0f4fa, #cbd5e1);
+        }
+        body.theme-light .stats-header,
+        body.theme-light .control-panel,
+        body.theme-light .canvas-holder {
+            background: rgba(255,255,255,0.6);
+            border-color: rgba(0,0,0,0.1);
+        }
+        body.theme-light .stats-header div,
+        body.theme-light .hint-text {
+            color: #1e293b;
+        }
+        body.theme-light .text-white\/40 {
+            color: #334155cc;
+        }
+
         canvas { 
             image-rendering: crisp-edges; 
             image-rendering: pixelated; 
@@ -30,6 +48,7 @@
             display: block;
             border-radius: 16px;
             background: #0b1120;
+            transition: background 0.2s;
         }
         .btn-game { 
             transition: all 0.06s ease; 
@@ -47,7 +66,6 @@
             transform: translateY(4px); 
             box-shadow: 0 1px 0 rgba(0,0,0,0.5); 
         }
-        /* next piece grid */
         .next-mini-grid { 
             display: grid; 
             grid-template-columns: repeat(4, 1fr); 
@@ -64,8 +82,8 @@
             border-radius: 5px; 
             width: 100%;
             aspect-ratio: 1/1;
+            transition: transform 0.1s;
         }
-        /* layout fleksibel */
         .game-wrapper {
             display: flex;
             flex-direction: column;
@@ -91,7 +109,6 @@
             width: 85px;
             flex-shrink: 0;
         }
-        /* tablet / hp besar */
         @media (min-width: 420px) {
             .control-panel { width: 100px; padding: 14px 10px; }
         }
@@ -105,7 +122,6 @@
             border: 1px solid rgba(255,255,255,0.15);
             box-shadow: 0 20px 30px -10px black;
         }
-        /* header stats */
         .stats-header {
             display: flex;
             align-items: center;
@@ -118,24 +134,43 @@
             color: white;
             width: 100%;
         }
-        /* hint kecil */
         .hint-text {
             color: rgba(255,255,255,0.3);
             font-size: 11px;
             text-align: center;
             margin-top: 6px;
         }
+        @keyframes blinkBlock {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.05); background-color: #ffffff !important; }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .block-animate {
+            animation: blinkBlock 0.2s ease-in-out 2;
+        }
+        .highscore-badge {
+            background: #fbbf24;
+            color: black;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 30px;
+            font-weight: bold;
+            margin-left: 6px;
+        }
     </style>
 </head>
 <body>
 <div class="game-wrapper">
 
-    <!-- HEADER: skor, next, baris (responsif) -->
+    <!-- HEADER: skor, next, baris + high score & tombol tema -->
     <div class="stats-header">
         <div class="flex items-center gap-2">
             <div class="w-2 h-8 bg-lime-400 rounded-full"></div>
             <div>
-                <div class="text-[10px] text-white/40 leading-tight">SKOR</div>
+                <div class="text-[10px] text-white/40 leading-tight flex items-center">
+                    SKOR 
+                    <span id="highScoreBadge" class="highscore-badge hidden">🏆</span>
+                </div>
                 <div id="scoreDisplay" class="text-2xl sm:text-3xl font-black text-lime-300 leading-none">0</div>
             </div>
         </div>
@@ -149,9 +184,13 @@
                 <div class="next-block"></div><div class="next-block"></div><div class="next-block"></div><div class="next-block"></div>
             </div>
         </div>
-        <div class="text-right">
-            <div class="text-[10px] text-white/40">BARIS</div>
-            <div id="linesDisplay" class="text-xl sm:text-2xl font-mono text-cyan-300">0</div>
+        <div class="flex items-center gap-2">
+            <div class="text-right mr-1">
+                <div class="text-[10px] text-white/40">BARIS</div>
+                <div id="linesDisplay" class="text-xl sm:text-2xl font-mono text-cyan-300">0</div>
+            </div>
+            <!-- tombol ganti tema -->
+            <button id="themeToggleBtn" class="bg-white/10 hover:bg-white/20 text-white rounded-full w-8 h-8 flex items-center justify-center text-lg border border-white/20">🎨</button>
         </div>
     </div>
 
@@ -161,12 +200,12 @@
         <div class="control-panel">
             <div class="text-white/20 text-3xl text-center leading-none -mt-2">—</div>
             <button id="pauseToggleBtn" class="btn-game text-sm bg-gray-600/70 active:bg-gray-500 py-3 rounded-xl border-b-4 border-gray-700 text-white/90">⏸Pause</button>
-            <button id="rotateRightBtn" class="btn-game bg-amber-500/90 active:bg-amber-400 text-3xl py-3 rounded-2xl border-b-4 border-amber-800">↻</button>
+            <button id="rotateLeftBtn" class="btn-game bg-amber-500/90 active:bg-amber-400 text-3xl py-3 rounded-2xl border-b-4 border-amber-800">↺</button>
             <button id="hardDropBtn" class="btn-game bg-purple-500/90 active:bg-purple-400 text-xl py-3 rounded-2xl border-b-4 border-purple-800">Dash</button>
             <button id="moveLeftBtn" class="btn-game bg-sky-500/90 active:bg-sky-400 text-3xl py-3 rounded-2xl border-b-4 border-sky-800">←</button>
         </div>
 
-        <!-- CANVAS (RESPONSIF, UKURAN FLEX) -->
+        <!-- CANVAS -->
         <div class="canvas-holder">
             <canvas id="tetrisCanvas" width="300" height="600" style="max-width: 100%; height: auto; aspect-ratio: 1/2;"></canvas>
         </div>
@@ -176,14 +215,14 @@
             <div class="text-white/20 text-3xl text-center leading-none -mt-2">—</div>
             <button id="resetGameBtn" class="btn-game text-sm bg-red-800/70 active:bg-red-700 py-3 rounded-xl border-b-4 border-red-950">Reset</button>
             <button id="hardDropBtn2" class="btn-game bg-purple-500/90 active:bg-purple-400 text-xl py-3 rounded-2xl border-b-4 border-purple-800">Dash</button>
-            <button id="rotateRightBtn2" class="btn-game bg-amber-500/90 active:bg-amber-400 text-3xl py-3 rounded-2xl border-b-4 border-amber-800">↻</button>
+            <button id="rotateRightBtn" class="btn-game bg-amber-500/90 active:bg-amber-400 text-3xl py-3 rounded-2xl border-b-4 border-amber-800">↻</button>
             <button id="moveRightBtn" class="btn-game bg-sky-500/90 active:bg-sky-400 text-3xl py-3 rounded-2xl border-b-4 border-sky-800">→</button>
         </div>
     </div>
 
-    <!-- HINT MOBILE -->
+    <!-- HINT MOBILE + combo info -->
     <div class="hint-text flex flex-wrap justify-center gap-3">
-        <span>← → geser</span> <span>⬇️⤓ hard drop</span> <span>↺↻ putar</span> <span>⏸️ jeda</span>
+        <span>← → geser</span> <span id="comboDisplay" class="text-yellow-300 font-bold">🔥 0x</span> <span>↻ putar</span> <span>⏸️ jeda</span>
     </div>
 </div>
 
@@ -194,6 +233,8 @@
         const scoreSpan = document.getElementById('scoreDisplay');
         const linesSpan = document.getElementById('linesDisplay');
         const nextContainer = document.getElementById('nextPieceContainer');
+        const comboDisplay = document.getElementById('comboDisplay');
+        const highScoreBadge = document.getElementById('highScoreBadge');
 
         // konstanta game
         const COLS = 10, ROWS = 20;
@@ -202,6 +243,149 @@
         let board = Array(ROWS).fill().map(() => Array(COLS).fill(0));
         let score = 0, lines = 0;
         let gameActive = true, paused = false;
+
+        // --- FITUR BARU: SKOR + KOMBO ---
+        let combo = 0;
+        let lastClearTime = 0;
+        const COMBO_WINDOW = 2000; // 2 detik
+
+        // --- HIGH SCORE (localStorage) ---
+        let highScore = localStorage.getItem('tetrisHighScore') ? parseInt(localStorage.getItem('tetrisHighScore')) : 0;
+        function updateHighScore() {
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('tetrisHighScore', highScore);
+                highScoreBadge.classList.remove('hidden');
+                highScoreBadge.innerText = `🏆 ${highScore}`;
+            } else {
+                if (highScore > 0) {
+                    highScoreBadge.classList.remove('hidden');
+                    highScoreBadge.innerText = `🏆 ${highScore}`;
+                } else {
+                    highScoreBadge.classList.add('hidden');
+                }
+            }
+        }
+
+        // --- TEMA WARNA ---
+        let currentTheme = 'dark';
+        function toggleTheme() {
+            if (document.body.classList.contains('theme-light')) {
+                document.body.classList.remove('theme-light');
+                currentTheme = 'dark';
+            } else {
+                document.body.classList.add('theme-light');
+                currentTheme = 'light';
+            }
+        }
+        document.getElementById('themeToggleBtn').addEventListener('click', toggleTheme);
+
+        // --- ANIMASI PER BLOK SAAT BARIS PENUH ---
+        function animateFullRows(rows) {
+            // rows adalah array index baris yang penuh
+            if (!rows.length) return;
+            
+            // simpan board sementara
+            const originalBoard = board.map(row => [...row]);
+            
+            // animasi dengan interval
+            let blinkCount = 0;
+            const maxBlinks = 4; // 2 kali kedip (karena interval 100ms * 4 = 400ms)
+            
+            const interval = setInterval(() => {
+                // toggle antara menampilkan board asli dan board dengan blok putih
+                if (blinkCount % 2 === 0) {
+                    // gambar board dengan efek putih pada baris yang penuh
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.fillStyle = '#0f172a';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    for (let row = 0; row < ROWS; row++) {
+                        for (let col = 0; col < COLS; col++) {
+                            if (originalBoard[row][col] !== 0) {
+                                // jika baris ini termasuk yang penuh, warnai putih
+                                if (rows.includes(row)) {
+                                    ctx.fillStyle = '#ffffff';
+                                } else {
+                                    ctx.fillStyle = originalBoard[row][col];
+                                }
+                                ctx.fillRect(col*BLOCK_SIZE, row*BLOCK_SIZE, BLOCK_SIZE-1, BLOCK_SIZE-1);
+                                ctx.fillStyle = 'rgba(255,255,255,0.2)';
+                                ctx.fillRect(col*BLOCK_SIZE+3, row*BLOCK_SIZE+3, BLOCK_SIZE-7, BLOCK_SIZE-7);
+                            } else {
+                                ctx.fillStyle = '#1e293b';
+                                ctx.fillRect(col*BLOCK_SIZE, row*BLOCK_SIZE, BLOCK_SIZE-1, BLOCK_SIZE-1);
+                            }
+                        }
+                    }
+                } else {
+                    // gambar board normal (tanpa efek)
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.fillStyle = '#0f172a';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    for (let row = 0; row < ROWS; row++) {
+                        for (let col = 0; col < COLS; col++) {
+                            if (originalBoard[row][col] !== 0) {
+                                ctx.fillStyle = originalBoard[row][col];
+                                ctx.fillRect(col*BLOCK_SIZE, row*BLOCK_SIZE, BLOCK_SIZE-1, BLOCK_SIZE-1);
+                                ctx.fillStyle = 'rgba(255,255,255,0.2)';
+                                ctx.fillRect(col*BLOCK_SIZE+3, row*BLOCK_SIZE+3, BLOCK_SIZE-7, BLOCK_SIZE-7);
+                            } else {
+                                ctx.fillStyle = '#1e293b';
+                                ctx.fillRect(col*BLOCK_SIZE, row*BLOCK_SIZE, BLOCK_SIZE-1, BLOCK_SIZE-1);
+                            }
+                        }
+                    }
+                }
+                
+                blinkCount++;
+                
+                if (blinkCount >= maxBlinks) {
+                    clearInterval(interval);
+                    // setelah animasi selesai, hapus baris yang penuh
+                    removeFullRows(rows);
+                }
+            }, 100);
+        }
+
+        function removeFullRows(rows) {
+            // hapus baris dari board (dari bawah ke atas)
+            for (let i = rows.length - 1; i >= 0; i--) {
+                const row = rows[i];
+                for (let r = row; r > 0; r--) {
+                    board[r] = [...board[r-1]];
+                }
+                board[0] = Array(COLS).fill(0);
+            }
+            
+            // update skor setelah penghapusan
+            let rowsCleared = rows.length;
+            const now = Date.now();
+            if (now - lastClearTime < COMBO_WINDOW) {
+                combo++;
+            } else {
+                combo = 1;
+            }
+            lastClearTime = now;
+            comboDisplay.innerText = `🔥 ${combo}x`;
+
+            let basePoints = 0;
+            if (rowsCleared === 1) basePoints = 100;
+            else if (rowsCleared === 2) basePoints = 300;
+            else if (rowsCleared === 3) basePoints = 600;
+            else if (rowsCleared >= 4) basePoints = 1000;
+
+            let comboBonus = Math.floor(basePoints * 0.2 * (combo - 1));
+            let totalPoints = basePoints + comboBonus;
+
+            score += totalPoints;
+            lines += rowsCleared;
+
+            linesSpan.innerText = lines;
+            scoreSpan.innerText = score;
+            updateHighScore();
+        }
 
         const PIECES = [
             { shape: [[1,1,1,1]], color: '#2ad4e3' },        // I
@@ -224,7 +408,6 @@
             };
         }
 
-        // update next display (responsive)
         function updateNextDisplay() {
             if (!nextPiece) return;
             nextContainer.innerHTML = '';
@@ -260,6 +443,8 @@
 
         function lockPiece() {
             if (!currentPiece) return;
+            
+            // tempelkan piece ke board
             for (let r = 0; r < currentPiece.shape.length; r++) {
                 for (let c = 0; c < currentPiece.shape[0].length; c++) {
                     if (currentPiece.shape[r][c] !== 0) {
@@ -271,27 +456,36 @@
                     }
                 }
             }
-            clearFullRows();
+            
+            // cek baris penuh
+            checkFullRows();
+            
             if (gameActive && !paused) spawnNewPiece();
         }
 
-        function clearFullRows() {
-            let rowsCleared = 0;
-            for (let row = ROWS - 1; row >= 0; ) {
+        function checkFullRows() {
+            let fullRows = [];
+            for (let row = 0; row < ROWS; row++) {
                 if (board[row].every(cell => cell !== 0)) {
-                    for (let r = row; r > 0; r--) board[r] = [...board[r-1]];
-                    board[0] = Array(COLS).fill(0);
-                    rowsCleared++;
-                } else row--;
+                    fullRows.push(row);
+                }
             }
-            if (rowsCleared > 0) {
-                lines += rowsCleared;
-                if (rowsCleared === 1) score += 100;
-                else if (rowsCleared === 2) score += 300;
-                else if (rowsCleared === 3) score += 600;
-                else if (rowsCleared >= 4) score += 1000;
-                linesSpan.innerText = lines;
-                scoreSpan.innerText = score;
+            
+            if (fullRows.length > 0) {
+                // auto reset jika kolom penuh (baris paling atas penuh)
+                if (fullRows.includes(0)) {
+                    // game over, auto reset setelah animasi
+                    setTimeout(() => {
+                        resetGame();
+                    }, 500);
+                }
+                
+                // animasi untuk baris yang penuh
+                animateFullRows(fullRows);
+            } else {
+                // tidak ada baris penuh, reset combo
+                combo = 0;
+                comboDisplay.innerText = `🔥 0x`;
             }
         }
 
@@ -308,6 +502,10 @@
 
             if (collision(currentPiece.shape, currentPiece.x, currentPiece.y)) {
                 gameActive = false;
+                // auto reset saat game over
+                setTimeout(() => {
+                    resetGame();
+                }, 500);
             }
         }
 
@@ -317,25 +515,40 @@
                 currentPiece.y++; return true;
             } else { lockPiece(); return false; }
         }
-        function moveLeft() { if (gameActive && !paused && currentPiece && !collision(currentPiece.shape, currentPiece.x-1, currentPiece.y)) currentPiece.x--; }
-        function moveRight() { if (gameActive && !paused && currentPiece && !collision(currentPiece.shape, currentPiece.x+1, currentPiece.y)) currentPiece.x++; }
+        
+        function moveLeft() { 
+            if (gameActive && !paused && currentPiece && !collision(currentPiece.shape, currentPiece.x-1, currentPiece.y)) 
+                currentPiece.x--; 
+        }
+        
+        function moveRight() { 
+            if (gameActive && !paused && currentPiece && !collision(currentPiece.shape, currentPiece.x+1, currentPiece.y)) 
+                currentPiece.x++; 
+        }
+        
         function rotatePiece(direction = 'right') {
             if (!gameActive || paused || !currentPiece) return;
             let rotated;
             if (direction === 'right') {
                 rotated = currentPiece.shape[0].map((_, idx) => currentPiece.shape.map(row => row[idx]).reverse());
             } else {
-                // left = 3x right
                 rotated = currentPiece.shape[0].map((_, idx) => currentPiece.shape.map(row => row[idx]).reverse());
                 for (let i=0; i<2; i++) rotated = rotated[0].map((_, idx) => rotated.map(row => row[idx]).reverse());
             }
             if (!collision(rotated, currentPiece.x, currentPiece.y)) {
                 currentPiece.shape = rotated;
             } else {
-                if (!collision(rotated, currentPiece.x-1, currentPiece.y)) { currentPiece.shape = rotated; currentPiece.x--; }
-                else if (!collision(rotated, currentPiece.x+1, currentPiece.y)) { currentPiece.shape = rotated; currentPiece.x++; }
+                if (!collision(rotated, currentPiece.x-1, currentPiece.y)) { 
+                    currentPiece.shape = rotated; 
+                    currentPiece.x--; 
+                }
+                else if (!collision(rotated, currentPiece.x+1, currentPiece.y)) { 
+                    currentPiece.shape = rotated; 
+                    currentPiece.x++; 
+                }
             }
         }
+        
         function hardDrop() {
             if (!gameActive || paused || !currentPiece) return;
             while (!collision(currentPiece.shape, currentPiece.x, currentPiece.y + 1)) currentPiece.y++;
@@ -344,17 +557,22 @@
 
         function resetGame() {
             board = Array(ROWS).fill().map(() => Array(COLS).fill(0));
-            score = 0; lines = 0; gameActive = true; paused = false;
+            score = 0; lines = 0; gameActive = true; paused = false; combo = 0;
             scoreSpan.innerText = '0'; linesSpan.innerText = '0';
+            comboDisplay.innerText = '🔥 0x';
             nextPiece = randomPiece(); updateNextDisplay();
             spawnNewPiece();
+            updateHighScore();
         }
 
-        // draw (dengan ukuran blok dinamis sebenarnya tetap karena canvas 300x600, tapi tampil proporsional)
+        // draw
         function draw() {
+            if (!gameActive) return;
+            
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = '#0f172a';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
             for (let row = 0; row < ROWS; row++) {
                 for (let col = 0; col < COLS; col++) {
                     if (board[row][col] !== 0) {
@@ -368,6 +586,7 @@
                     }
                 }
             }
+            
             if (currentPiece && gameActive) {
                 for (let r=0; r<currentPiece.shape.length; r++) {
                     for (let c=0; c<currentPiece.shape[0].length; c++) {
@@ -392,27 +611,34 @@
         // init
         nextPiece = randomPiece(); updateNextDisplay();
         spawnNewPiece();
+        updateHighScore();
 
-        // mapping tombol (semua fungsi)
+        // mapping tombol
         const actions = [
-            ['moveLeftBtn', moveLeft], ['moveLeftBtn2', moveLeft],
-            ['moveRightBtn', moveRight], ['moveRightBtn2', moveRight],
-            ['rotateLeftBtn', ()=>rotatePiece('left')], ['rotateLeftBtn2', ()=>rotatePiece('left')],
-            ['rotateRightBtn', ()=>rotatePiece('right')], ['rotateRightBtn2', ()=>rotatePiece('right')],
-            ['hardDropBtn', hardDrop], ['hardDropBtn2', hardDrop],
+            ['moveLeftBtn', moveLeft],
+            ['moveRightBtn', moveRight],
+            ['rotateLeftBtn', ()=>rotatePiece('left')],
+            ['rotateRightBtn', ()=>rotatePiece('right')],
+            ['hardDropBtn', hardDrop],
+            ['hardDropBtn2', hardDrop],
             ['pauseToggleBtn', ()=>{ if(gameActive) paused = !paused; }],
             ['resetGameBtn', resetGame]
         ];
+        
         actions.forEach(([id, fn]) => {
             const el = document.getElementById(id);
             if (el) el.addEventListener('click', (e) => { e.preventDefault(); fn(); });
         });
 
-        // keyboard (opsional)
+        // keyboard
         window.addEventListener('keydown', (e) => {
             const key = e.key;
             if (!gameActive) return;
-            e.preventDefault();
+            
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
+                e.preventDefault();
+            }
+            
             if (key === 'ArrowLeft') moveLeft();
             else if (key === 'ArrowRight') moveRight();
             else if (key === 'ArrowDown') moveDown();
@@ -420,9 +646,6 @@
             else if (key === ' ' || key === 'Space') hardDrop();
             else if (key === 'p' || key === 'P') paused = !paused;
         });
-        window.addEventListener('keydown', (e) => {
-            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) e.preventDefault();
-        }, {passive: false});
     })();
 </script>
 </body>
