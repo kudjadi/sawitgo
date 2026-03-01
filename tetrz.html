@@ -54,12 +54,11 @@
             <!-- dash (strip kecil) sebagai pemisah visual -->
             <div class="text-white/20 text-3xl text-center leading-none -mt-1">—</div>
             <!-- rotate kiri + kanan? tapi permintaan 1 kolom, kita satukan jadi dua tombol rotate dan satu panah? kita taruh rotate kanan & kiri + panah kiri saja? tapi harus fungsional, kita tempatkan rotate kiri, rotate kanan, lalu panah kiri, dan hard drop (karena hard drop penting) dalam satu kolom. -->
-            <button id="rotateLeftBtn" class="btn-game bg-amber-500/90 active:bg-amber-400 text-3xl py-2 rounded-xl border-b-4 border-amber-800 text-white">↺</button>
             <button id="rotateRightBtn" class="btn-game bg-amber-500/90 active:bg-amber-400 text-3xl py-2 rounded-xl border-b-4 border-amber-800 text-white">↻</button>
             <button id="moveLeftBtn" class="btn-game bg-sky-500/90 active:bg-sky-400 text-3xl py-2 rounded-xl border-b-4 border-sky-800 text-white">←</button>
-            <button id="hardDropBtn" class="btn-game bg-purple-500/90 active:bg-purple-400 text-xl py-2 rounded-xl border-b-4 border-purple-800 text-white">⬇️⤓</button>
+            <button id="hardDropBtn" class="btn-game bg-purple-500/90 active:bg-purple-400 text-xl py-2 rounded-xl border-b-4 border-purple-800 text-white">⤓</button>
             <!-- jeda kecil -->
-            <button id="pauseToggleBtn" class="text-xs bg-gray-600/60 active:bg-gray-500 py-2 rounded-lg border-b-4 border-gray-700 text-white/90 mt-1">⏸️</button>
+            <button id="pauseToggleBtn" class="text-xs bg-gray-600/60 active:bg-gray-500 py-2 rounded-lg border-b-4 border-gray-700 text-white/90 mt-1">⏸Pause</button>
         </div>
 
         <!-- CANVAS GAME -->
@@ -70,11 +69,10 @@
         <!-- PANEL KANAN: satu kolom vertikal (dash + rotate + arah kanan) -->
         <div class="w-20 md:w-28 flex flex-col justify-end gap-2 bg-white/5 backdrop-blur-sm p-2 rounded-2xl border border-white/10">
             <div class="text-white/20 text-3xl text-center leading-none -mt-1">—</div>
-            <button id="rotateLeftBtn2" class="btn-game bg-amber-500/90 active:bg-amber-400 text-3xl py-2 rounded-xl border-b-4 border-amber-800 text-white">↺</button>
             <button id="rotateRightBtn2" class="btn-game bg-amber-500/90 active:bg-amber-400 text-3xl py-2 rounded-xl border-b-4 border-amber-800 text-white">↻</button>
             <button id="moveRightBtn" class="btn-game bg-sky-500/90 active:bg-sky-400 text-3xl py-2 rounded-xl border-b-4 border-sky-800 text-white">→</button>
-            <button id="hardDropBtn2" class="btn-game bg-purple-500/90 active:bg-purple-400 text-xl py-2 rounded-xl border-b-4 border-purple-800 text-white">⬇️⤓</button>
-            <button id="resetGameBtn" class="text-xs bg-red-800/60 active:bg-red-700 py-2 rounded-lg border-b-4 border-red-950 text-white/90 mt-1">⟲</button>
+            <button id="hardDropBtn2" class="btn-game bg-purple-500/90 active:bg-purple-400 text-xl py-2 rounded-xl border-b-4 border-purple-800 text-white">⬇</button>
+            <button id="resetGameBtn" class="text-xs bg-red-800/60 active:bg-red-700 py-2 rounded-lg border-b-4 border-red-950 text-white/90 mt-1">⟲ Reset</button>
         </div>
     </div>
 
